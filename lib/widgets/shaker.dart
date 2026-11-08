@@ -260,7 +260,7 @@ class _BottlePainter extends CustomPainter {
 
     // 目盛り
     final tick = Paint()
-      ..color = Colors.black.withValues(alpha: 0.22)
+      ..color = AppColors.ink.withValues(alpha: 0.22)
       ..strokeWidth = 2
       ..strokeCap = StrokeCap.round;
     for (final y in [70.0, 88.0, 106.0, 124.0]) {
@@ -279,11 +279,11 @@ class _BottlePainter extends CustomPainter {
       Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2
-        ..color = Colors.black.withValues(alpha: 0.18),
+        ..color = AppColors.ink.withValues(alpha: 0.12),
     );
 
-    // えり・フタ・注ぎ口（アンバーのフタ）
-    final cap = Paint()..color = AppColors.primary;
+    // えり・フタ・注ぎ口（濃い色）
+    final cap = Paint()..color = AppColors.ink;
     canvas.drawRRect(RRect.fromLTRBR(18, 20, 82, 36, const Radius.circular(6)), cap);
     canvas.drawRRect(RRect.fromLTRBR(30, 6, 70, 22, const Radius.circular(6)), cap);
     canvas.drawRRect(
@@ -295,7 +295,7 @@ class _BottlePainter extends CustomPainter {
       const Offset(22, 28),
       const Offset(78, 28),
       Paint()
-        ..color = Colors.black.withValues(alpha: 0.2)
+        ..color = Colors.white.withValues(alpha: 0.15)
         ..strokeWidth = 1.5,
     );
   }

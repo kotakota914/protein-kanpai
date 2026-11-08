@@ -21,7 +21,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
   void _invite() {
     // TODO(backend): 招待リンクを発行して共有する
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('招待リンクはまだ作れません（準備中）')),
+      const SnackBar(content: Text('招待リンクの共有は準備中です')),
     );
   }
 
@@ -32,52 +32,58 @@ class _FriendsScreenState extends State<FriendsScreen> {
       appBar: AppBar(
         title: const Text('友達'),
         actions: [
-          IconButton(
-            onPressed: () => setState(() => _tab = 1),
-            tooltip: '友達を追加',
-            color: AppColors.primary,
-            icon: const Icon(Icons.person_add_alt_1_outlined),
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: IconButton.filledTonal(
+              onPressed: () => setState(() => _tab = 1),
+              tooltip: '友達を追加',
+              icon: const Icon(Icons.person_add_alt_1_outlined),
+              style: IconButton.styleFrom(
+                backgroundColor: AppColors.primarySoft,
+                foregroundColor: AppColors.primary,
+              ),
+            ),
           ),
-          const SizedBox(width: 8),
         ],
       ),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+        padding: const EdgeInsets.fromLTRB(20, 6, 20, 24),
         children: [
-          _Tabs(
+          _Segmented(
             labels: ['タイムライン', 'フォロー中 ${repo.following.length}'],
             selected: _tab,
             onChanged: (i) => setState(() => _tab = i),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
           if (_tab == 0) ..._timeline(repo) else ..._followList(repo),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
           AppCard(
-            borderColor: AppColors.primary,
-            color: AppColors.background,
+            color: AppColors.primarySoft,
+            shadow: false,
             onTap: _invite,
-            child: Row(
+            child: const Row(
               children: [
-                const Expanded(
+                Icon(Icons.link_rounded, color: AppColors.primary),
+                SizedBox(width: 12),
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '友達を誘う',
-                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                        '友達を招待しよう',
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
                       ),
                       Text(
-                        'フォローし合うと、同時に振ったとき乾杯になる',
+                        '招待リンクを送ると、乾杯できるようになります',
                         style: TextStyle(fontSize: 12, color: AppColors.muted),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(width: 12),
                 Pill(
-                  label: '招待リンクを送る',
+                  label: 'リンクを送る',
                   background: AppColors.primary,
-                  foreground: AppColors.onPrimary,
+                  foreground: Colors.white,
                 ),
               ],
             ),
@@ -91,68 +97,69 @@ class _FriendsScreenState extends State<FriendsScreen> {
     final following = repo.following;
     final now = DateTime.now();
     return [
-      const SectionLabel('いま振ってる'),
-      const SizedBox(height: 12),
+      const SectionLabel('いま振っている友達'),
+      const SizedBox(height: 10),
       if (following.isEmpty)
         const Text(
-          'まだ誰もフォローしていない。右上から友達を追加しよう。',
+          'まだ誰もフォローしていません',
           style: TextStyle(fontSize: 13, color: AppColors.muted),
         )
       else
         Wrap(
-          spacing: 20,
+          spacing: 18,
           runSpacing: 12,
-          children: [for (final f in following) _FriendNow(friend: f)],
+          children: [for (final f in following) _ShakingFriend(friend: f)],
         ),
-      const SizedBox(height: 26),
+      const SizedBox(height: 20),
       const SectionLabel('タイムライン'),
-      const SizedBox(height: 4),
-      for (final item in repo.feed) _FeedRow(item: item, now: now),
+      const SizedBox(height: 10),
+      for (final item in repo.feed) ...[
+        _FeedTile(item: item, now: now),
+        const SizedBox(height: 10),
+      ],
     ];
   }
 
   List<Widget> _followList(AppRepository repo) {
     return [
-      for (final f in repo.friends)
-        Container(
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          decoration: const BoxDecoration(
-            border: Border(bottom: BorderSide(color: AppColors.line)),
-          ),
+      for (final f in repo.friends) ...[
+        AppCard(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           child: Row(
             children: [
-              Avatar(initial: f.initial, textColor: Avatar.colorFor(f.name), size: 42),
+              Avatar(initial: f.initial, color: Avatar.colorFor(f.name), size: 40),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
                   f.name,
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
                 ),
               ),
-              SizedBox(
-                width: 112,
-                child: f.following
-                    ? OutlinedButton(
-                        style: OutlinedButton.styleFrom(minimumSize: const Size(0, 40)),
-                        onPressed: () => repo.toggleFollow(f.id),
-                        child: const Text('フォロー中'),
-                      )
-                    : FilledButton(
-                        style: FilledButton.styleFrom(minimumSize: const Size(0, 40)),
-                        onPressed: () => repo.toggleFollow(f.id),
-                        child: const Text('フォロー'),
-                      ),
-              ),
+              f.following
+                  ? OutlinedButton(
+                      onPressed: () => repo.toggleFollow(f.id),
+                      child: const Text('フォロー中'),
+                    )
+                  : FilledButton(
+                      style: FilledButton.styleFrom(minimumSize: const Size(88, 40)),
+                      onPressed: () => repo.toggleFollow(f.id),
+                      child: const Text('フォロー'),
+                    ),
             ],
           ),
         ),
+        const SizedBox(height: 10),
+      ],
     ];
   }
 }
 
-/// 下線で選択中を示すタブ
-class _Tabs extends StatelessWidget {
-  const _Tabs({required this.labels, required this.selected, required this.onChanged});
+class _Segmented extends StatelessWidget {
+  const _Segmented({
+    required this.labels,
+    required this.selected,
+    required this.onChanged,
+  });
 
   final List<String> labels;
   final int selected;
@@ -161,34 +168,35 @@ class _Tabs extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: AppColors.line)),
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: AppColors.line.withValues(alpha: 0.6),
+        borderRadius: BorderRadius.circular(14),
       ),
       child: Row(
         children: [
           for (var i = 0; i < labels.length; i++)
-            Semantics(
-              selected: i == selected,
-              button: true,
-              child: InkWell(
-                onTap: () => onChanged(i),
-                child: Container(
-                  padding: const EdgeInsets.fromLTRB(2, 12, 2, 10),
-                  margin: const EdgeInsets.only(right: 24),
-                  decoration: BoxDecoration(
-                    border: Border(
-                      bottom: BorderSide(
-                        color: i == selected ? AppColors.primary : Colors.transparent,
-                        width: 3,
-                      ),
+            Expanded(
+              child: Semantics(
+                selected: i == selected,
+                button: true,
+                child: GestureDetector(
+                  onTap: () => onChanged(i),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    padding: const EdgeInsets.symmetric(vertical: 9),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: i == selected ? AppColors.surface : Colors.transparent,
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                  ),
-                  child: Text(
-                    labels[i],
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: i == selected ? AppColors.ink : AppColors.muted,
+                    child: Text(
+                      labels[i],
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: i == selected ? FontWeight.w700 : FontWeight.w500,
+                        color: i == selected ? AppColors.ink : AppColors.muted,
+                      ),
                     ),
                   ),
                 ),
@@ -200,8 +208,8 @@ class _Tabs extends StatelessWidget {
   }
 }
 
-class _FriendNow extends StatelessWidget {
-  const _FriendNow({required this.friend});
+class _ShakingFriend extends StatelessWidget {
+  const _ShakingFriend({required this.friend});
 
   final Friend friend;
 
@@ -210,20 +218,34 @@ class _FriendNow extends StatelessWidget {
     final live = friend.shakingNow;
     return Column(
       children: [
-        Avatar(
-          initial: friend.initial,
-          textColor: Avatar.colorFor(friend.name),
-          ringColor: live ? AppColors.cheer : null,
-          size: 58,
+        Container(
+          width: 64,
+          height: 64,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: live ? AppColors.cheer : AppColors.line,
+              width: live ? 3 : 2,
+            ),
+          ),
+          child: Avatar(
+            initial: friend.initial,
+            color: Avatar.colorFor(friend.name),
+            size: 54,
+          ),
         ),
         const SizedBox(height: 6),
-        Text(friend.name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
-        const SizedBox(height: 3),
+        Text(friend.name, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+        const SizedBox(height: 2),
         if (live)
-          const Pill(label: '振り中')
+          const Pill(
+            label: '振り中',
+            leading: ShakerIcon(size: 14, color: AppColors.ink, liquidColor: AppColors.cocoa),
+          )
         else
           Text(
-            friend.shookToday ? '今日は済み' : '今日まだ',
+            friend.shookToday ? '今日済み' : '今日まだ',
             style: const TextStyle(fontSize: 11, color: AppColors.muted),
           ),
       ],
@@ -231,29 +253,35 @@ class _FriendNow extends StatelessWidget {
   }
 }
 
-class _FeedRow extends StatelessWidget {
-  const _FeedRow({required this.item, required this.now});
+class _FeedTile extends StatelessWidget {
+  const _FeedTile({required this.item, required this.now});
 
   final FeedItem item;
   final DateTime now;
 
   @override
   Widget build(BuildContext context) {
-    final Widget mark = switch (item.kind) {
-      FeedKind.cheer => const Icon(AppIcons.cheer, color: AppColors.cheer, size: 22),
-      FeedKind.shake => const ShakerIcon(size: 22, liquidColor: AppColors.cocoa),
-      FeedKind.streak => const Icon(AppIcons.flame, color: AppColors.primary, size: 22),
+    final badge = switch (item.kind) {
+      FeedKind.cheer => const IconBadge(
+          icon: AppIcons.cheer,
+          size: 32,
+          background: AppColors.cheerSoft,
+          foreground: AppColors.ink,
+        ),
+      FeedKind.shake => const IconBadge(
+          size: 32,
+          background: AppColors.primarySoft,
+          child: ShakerIcon(size: 18, liquidColor: AppColors.cocoa),
+        ),
+      FeedKind.streak => const IconBadge(icon: AppIcons.flame, size: 32),
     };
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: AppColors.line)),
-      ),
+    return AppCard(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       child: Row(
         children: [
           Avatar(
             initial: item.friendName.substring(0, 1),
-            textColor: Avatar.colorFor(item.friendName),
+            color: Avatar.colorFor(item.friendName),
             size: 40,
           ),
           const SizedBox(width: 12),
@@ -261,7 +289,7 @@ class _FeedRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(item.text, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
+                Text(item.text, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
                 Text(
                   relativeTime(item.at, now),
                   style: const TextStyle(fontSize: 11, color: AppColors.muted),
@@ -269,8 +297,7 @@ class _FeedRow extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(width: 8),
-          mark,
+          badge,
         ],
       ),
     );

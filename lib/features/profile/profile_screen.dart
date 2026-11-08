@@ -33,6 +33,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     await showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
+      backgroundColor: AppColors.surface,
       builder: (sheetContext) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -92,7 +93,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     try {
       await repo.scanProtein();
     } catch (_) {
-      if (mounted) _toast('読み取れませんでした。袋の文字が写るように撮り直してください');
+      if (mounted) _toast('読み取れませんでした。もう一度撮ってください');
     } finally {
       if (mounted) setState(() => _scanning = false);
     }
@@ -106,7 +107,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('プロフィール')),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
+        padding: const EdgeInsets.fromLTRB(20, 6, 20, 24),
         children: [
           Row(
             children: [
@@ -121,24 +122,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         initial: repo.userInitial,
                         photo: repo.avatar,
                         color: AppColors.primary,
-                        textColor: AppColors.onPrimary,
-                        size: 80,
+                        size: 68,
                       ),
                       Positioned(
                         right: 0,
                         bottom: 0,
                         child: Container(
-                          width: 28,
-                          height: 28,
+                          width: 26,
+                          height: 26,
                           decoration: BoxDecoration(
-                            color: AppColors.ink,
+                            color: AppColors.surface,
                             shape: BoxShape.circle,
-                            border: Border.all(color: AppColors.background, width: 3),
+                            border: Border.all(color: AppColors.line, width: 1.5),
                           ),
                           child: const Icon(
                             Icons.photo_camera,
                             size: 14,
-                            color: AppColors.background,
+                            color: AppColors.primary,
                           ),
                         ),
                       ),
@@ -146,14 +146,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(repo.userName, style: AppFonts.heading(28)),
+                    Text(repo.userName, style: AppFonts.heading(22)),
                     const Text(
-                      'アイコンを押すと写真を変えられる',
+                      'アイコンを押すと写真を変えられます',
                       style: TextStyle(fontSize: 12, color: AppColors.muted),
                     ),
                   ],
@@ -161,44 +161,47 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 22),
+          const SizedBox(height: 14),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _Stat(value: '${repo.streak}', label: '日連続'),
-              _Stat(value: '${repo.totalDays}', label: '日 合計'),
-              _Stat(value: '${repo.totalCheers}', label: '回 乾杯'),
-              _Stat(value: '${repo.points}', label: 'pt'),
+              _Stat(label: '連続', value: '${repo.streak}日'),
+              const SizedBox(width: 8),
+              _Stat(label: '合計', value: '${repo.totalDays}日'),
+              const SizedBox(width: 8),
+              _Stat(label: '乾杯', value: '${repo.totalCheers}回'),
+              const SizedBox(width: 8),
+              _Stat(label: 'ポイント', value: '${repo.points}'),
             ],
           ),
-          const SizedBox(height: 22),
+          const SizedBox(height: 12),
           AppCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Expanded(
-                      child: Text(
-                        '好きなプロテイン',
-                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
-                      ),
-                    ),
+                    Text('好きなプロテイン', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
                     Pill(
                       label: 'Gemini で読み取り',
                       icon: AppIcons.gemini,
-                      background: AppColors.primarySoft,
-                      foreground: AppColors.primary,
+                      background: AppColors.cheerSoft,
+                      iconColor: AppColors.gold,
                     ),
                   ],
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 12),
                 Row(
                   children: [
-                    const IconBadge(
-                      size: 52,
-                      background: AppColors.background,
-                      child: ShakerIcon(size: 30, liquidColor: AppColors.cocoa),
+                    Container(
+                      width: 56,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        color: AppColors.primarySoft,
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      alignment: Alignment.center,
+                      child: const ShakerIcon(size: 32, liquidColor: AppColors.cocoa),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -206,12 +209,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            fav == null ? 'まだ登録していない' : '${fav.name} ${fav.flavor}',
-                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                            fav == null ? 'まだ登録していません' : '${fav.name} ${fav.flavor}',
+                            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
                           ),
                           Text(
                             fav == null
-                                ? '袋の写真を撮ると、商品名・味・たんぱく質量が入る'
+                                ? '袋の写真を撮ると自動で登録できます'
                                 : '1食あたり たんぱく質 ${fav.proteinGrams}g',
                             style: const TextStyle(fontSize: 12, color: AppColors.muted),
                           ),
@@ -220,13 +223,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 12),
                 OutlinedButton.icon(
                   onPressed: _scanning ? null : () => _scan(repo),
                   style: OutlinedButton.styleFrom(
                     minimumSize: const Size.fromHeight(48),
                     foregroundColor: AppColors.primary,
                     side: const BorderSide(color: AppColors.primary, width: 1.5),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    textStyle: const TextStyle(
+                      fontFamily: AppFonts.body,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                   icon: _scanning
                       ? const SizedBox.square(
@@ -234,40 +243,44 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(AppIcons.camera),
-                  label: Text(_scanning ? 'Gemini が読み取り中' : '袋の写真から登録'),
+                  label: Text(_scanning ? 'Gemini が読み取り中…' : '袋の写真から登録する'),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'プロテインの袋を撮ると、Gemini が商品名・味・たんぱく質量を読み取ります',
+                  style: TextStyle(fontSize: 11, color: AppColors.muted),
                 ),
               ],
             ),
           ),
           const SizedBox(height: 12),
           AppCard(
+            color: AppColors.cheerSoft,
+            shadow: false,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Row(
                   children: [
-                    Icon(AppIcons.gemini, size: 18, color: AppColors.primary),
+                    Icon(AppIcons.gemini, size: 18, color: AppColors.gold),
                     SizedBox(width: 6),
-                    Text('今週のふりかえり', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+                    Text('今週のふりかえり', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
                   ],
                 ),
                 const SizedBox(height: 8),
-                Text(repo.weeklySummary, style: const TextStyle(fontSize: 14, height: 1.7)),
+                Text(repo.weeklySummary, style: const TextStyle(fontSize: 13, height: 1.65)),
                 const SizedBox(height: 6),
                 const Text(
                   'Gemini が記録をもとに作成',
-                  style: TextStyle(fontSize: 11, color: AppColors.muted),
+                  style: TextStyle(fontSize: 10, color: AppColors.muted),
                 ),
               ],
             ),
           ),
           const SizedBox(height: 16),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: TextButton(
-              onPressed: repo.signOut,
-              child: const Text('ログアウト', style: TextStyle(color: AppColors.muted)),
-            ),
+          TextButton(
+            onPressed: repo.signOut,
+            child: const Text('ログアウト', style: TextStyle(color: AppColors.muted)),
           ),
         ],
       ),
@@ -276,19 +289,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
 }
 
 class _Stat extends StatelessWidget {
-  const _Stat({required this.value, required this.label});
+  const _Stat({required this.label, required this.value});
 
-  final String value;
   final String label;
+  final String value;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(value, style: AppFonts.heading(30, color: AppColors.primary)),
-        Text(label, style: const TextStyle(fontSize: 12, color: AppColors.muted)),
-      ],
+    return Expanded(
+      child: AppCard(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 12),
+        child: Column(
+          children: [
+            FittedBox(child: Text(value, style: AppFonts.heading(18))),
+            Text(label, style: const TextStyle(fontSize: 11, color: AppColors.muted)),
+          ],
+        ),
+      ),
     );
   }
 }

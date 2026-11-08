@@ -146,7 +146,7 @@ class AppRepository extends ChangeNotifier {
         FeedItem(
           kind: FeedKind.cheer,
           friendName: cheer,
-          text: '$cheerと乾杯した',
+          text: '$cheerさんと乾杯しました',
           at: _clock(),
         ),
       );
@@ -244,19 +244,19 @@ class AppRepository extends ChangeNotifier {
       FeedItem(
         kind: FeedKind.shake,
         friendName: 'はなこ',
-        text: 'はなこが今日のプロテインを振った',
+        text: 'はなこさんが今日のプロテインを振りました',
         at: now.subtract(const Duration(minutes: 40)),
       ),
       FeedItem(
         kind: FeedKind.cheer,
         friendName: 'たろう',
-        text: 'たろうと乾杯した',
+        text: 'たろうさんと乾杯しました',
         at: now.subtract(const Duration(days: 2)),
       ),
       FeedItem(
         kind: FeedKind.streak,
         friendName: 'たろう',
-        text: 'たろうが 7日連続を達成',
+        text: 'たろうさんが 7日連続を達成！',
         at: now.subtract(const Duration(days: 3)),
       ),
     ]);

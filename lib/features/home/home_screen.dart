@@ -6,7 +6,6 @@ import '../../data/app_repository.dart';
 import '../../data/app_scope.dart';
 import '../../shake/shake_detector.dart';
 import '../../widgets/common.dart';
-import '../../widgets/gym.dart';
 import '../../widgets/shaker.dart';
 import 'shake_result_sheet.dart';
 
@@ -34,7 +33,7 @@ class _HomeScreenState extends State<HomeScreen>
   late final ShakeDetector _detector = widget.detectorFactory();
   late final AnimationController _pulse = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 600),
+    duration: const Duration(milliseconds: 700),
   );
   _ShakeState _state = _ShakeState.idle;
   double _progress = 0;
@@ -99,35 +98,31 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   Widget build(BuildContext context) {
     final repo = AppScope.of(context);
+    final listening = _state == _ShakeState.listening;
     final shaking = repo.shakingFriend;
-    final counting =
-        _state == _ShakeState.listening || _state == _ShakeState.sending;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('今日のプロテイン'),
         actions: [
           Padding(
-            padding: const EdgeInsets.only(right: 20),
-            child: Row(
-              children: [
-                const Icon(AppIcons.star, size: 18, color: AppColors.primary),
-                const SizedBox(width: 4),
-                Text('${repo.points}', style: AppFonts.heading(18)),
-                const SizedBox(width: 3),
-                const Text('pt', style: TextStyle(fontSize: 12, color: AppColors.muted)),
-              ],
+            padding: const EdgeInsets.only(right: 16),
+            child: Pill(
+              label: '${repo.points} pt',
+              icon: AppIcons.star,
+              background: AppColors.cheerSoft,
+              iconColor: AppColors.gold,
             ),
           ),
         ],
       ),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
         children: [
-          _Streak(repo: repo),
-          const SizedBox(height: 26),
+          _StreakCard(repo: repo),
+          const SizedBox(height: 28),
           Center(
-            child: _PlateButton(
+            child: _ShakeButton(
               state: _state,
               shookToday: repo.shookToday,
               progress: _progress,
@@ -139,20 +134,23 @@ class _HomeScreenState extends State<HomeScreen>
               },
             ),
           ),
-          const SizedBox(height: 16),
-          _StatusLine(state: _state, hits: (_progress * ShakeDetector.requiredHits).round(), counting: counting),
+          const SizedBox(height: 20),
+          if (listening || _state == _ShakeState.sending) ...[
+            _ShakeProgress(progress: _progress),
+            const SizedBox(height: 10),
+          ],
+          _HintText(state: _state),
           if (shaking != null) ...[
-            const SizedBox(height: 22),
+            const SizedBox(height: 20),
             AppCard(
               borderColor: AppColors.cheer,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               child: Row(
                 children: [
                   Avatar(
                     initial: shaking.initial,
-                    textColor: Avatar.colorFor(shaking.name),
-                    ringColor: AppColors.cheer,
-                    size: 42,
+                    color: AppColors.primarySoft,
+                    size: 40,
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -160,11 +158,15 @@ class _HomeScreenState extends State<HomeScreen>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '${shaking.name}が振ってる',
-                          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                          '${shaking.name}さんが振っています',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
+                        const SizedBox(height: 2),
                         const Text(
-                          'いま振れば乾杯になる',
+                          'いま振ると乾杯できるよ',
                           style: TextStyle(fontSize: 12, color: AppColors.muted),
                         ),
                       ],
@@ -176,7 +178,7 @@ class _HomeScreenState extends State<HomeScreen>
             ),
           ],
           if (showDevTools) ...[
-            const SizedBox(height: 18),
+            const SizedBox(height: 20),
             // 開発用：PC では振れないので、振ったことにして画面を確認する。
             // 提出・デモ用のビルドには表示されない（デモ動画には使わない）。
             OutlinedButton(
@@ -190,63 +192,99 @@ class _HomeScreenState extends State<HomeScreen>
   }
 }
 
-/// 大きな連続日数と、今週の「正」の字
-class _Streak extends StatelessWidget {
-  const _Streak({required this.repo});
+class _StreakCard extends StatelessWidget {
+  const _StreakCard({required this.repo});
 
   final AppRepository repo;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(
-              '${repo.streak}',
-              style: AppFonts.heading(108, color: AppColors.primary)
-                  .copyWith(height: 0.95),
-            ),
-            const SizedBox(width: 10),
-            Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('日連続', style: AppFonts.heading(26)),
-                  Text(
-                    repo.shookToday ? '今日の分は記録済み' : '今日はまだ',
-                    style: const TextStyle(fontSize: 13, color: AppColors.muted),
-                  ),
-                ],
+    final today = repo.today;
+    final monday = today.subtract(Duration(days: today.weekday - 1));
+    return AppCard(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              const IconBadge(icon: AppIcons.flame),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('${repo.streak}日連続', style: AppFonts.heading(24)),
+                    Text(
+                      repo.shookToday ? '今日のスタンプ：ゲット済み' : '今日のスタンプ：まだ',
+                      style: const TextStyle(fontSize: 13, color: AppColors.muted),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 14),
-        Row(
-          children: [
-            const Text(
-              '今週',
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.muted),
-            ),
-            const SizedBox(width: 12),
-            TallyMarks(count: repo.daysThisWeek),
-            const Spacer(),
-            Text('${repo.daysThisWeek}', style: AppFonts.heading(20)),
-            const Text(' / 7日', style: TextStyle(fontSize: 13, color: AppColors.muted)),
-          ],
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              for (var i = 0; i < 7; i++)
+                _DayDot(
+                  label: weekdayLabels[i],
+                  day: monday.add(Duration(days: i)),
+                  today: today,
+                  done: repo.logs.containsKey(monday.add(Duration(days: i))),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DayDot extends StatelessWidget {
+  const _DayDot({
+    required this.label,
+    required this.day,
+    required this.today,
+    required this.done,
+  });
+
+  final String label;
+  final DateTime day;
+  final DateTime today;
+  final bool done;
+
+  @override
+  Widget build(BuildContext context) {
+    final isToday = day == today;
+    return Column(
+      children: [
+        Text(label, style: const TextStyle(fontSize: 11, color: AppColors.muted)),
+        const SizedBox(height: 4),
+        Container(
+          width: 30,
+          height: 30,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: done
+                ? AppColors.primary
+                : (isToday ? AppColors.surface : AppColors.line.withValues(alpha: 0.6)),
+            border: isToday && !done
+                ? Border.all(color: AppColors.primary, width: 2)
+                : null,
+          ),
+          child: done
+              ? const Icon(Icons.check_rounded, size: 18, color: Colors.white)
+              : null,
         ),
       ],
     );
   }
 }
 
-/// バーベルのプレートの形をした振るボタン。外側の輪が振った回数だけ光る。
-class _PlateButton extends StatelessWidget {
-  const _PlateButton({
+class _ShakeButton extends StatelessWidget {
+  const _ShakeButton({
     required this.state,
     required this.shookToday,
     required this.progress,
@@ -257,7 +295,7 @@ class _PlateButton extends StatelessWidget {
   final _ShakeState state;
   final bool shookToday;
 
-  /// 振った回数の進み具合（0〜1）
+  /// 振った回数の進み具合（0〜1）。シェイカーの中身の混ざり具合に使う
   final double progress;
   final Animation<double> pulse;
   final VoidCallback? onTap;
@@ -265,55 +303,71 @@ class _PlateButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final listening = state == _ShakeState.listening;
-    final counting = listening || state == _ShakeState.sending;
     final label = switch (state) {
-      _ShakeState.listening => '振れ！',
-      _ShakeState.sending => '記録中',
-      _ => shookToday ? 'もう一回' : '押して、振れ',
+      _ShakeState.listening => 'シェイカーを\n振って！',
+      _ShakeState.sending => '記録中…',
+      _ => shookToday ? 'もう一回\n振る' : 'タップして\n準備',
     };
+    final coreColor = listening ? AppColors.cheer : AppColors.primary;
+    final textColor = listening ? AppColors.ink : Colors.white;
 
     return AnimatedBuilder(
       animation: pulse,
       builder: (context, child) => Transform.scale(
-        scale: listening ? 1 + pulse.value * 0.03 : 1,
+        scale: listening ? 1 + pulse.value * 0.05 : 1,
         child: child,
       ),
-      child: PlateRing(
-        segments: ShakeDetector.requiredHits,
-        lit: counting
-            ? progress * ShakeDetector.requiredHits
-            : (shookToday ? ShakeDetector.requiredHits.toDouble() : 0),
-        size: 292,
-        thickness: 18,
-        child: Semantics(
-          button: true,
-          label: label,
-          child: Material(
-            color: listening ? AppColors.primarySoft : AppColors.surface,
-            shape: const CircleBorder(),
-            clipBehavior: Clip.antiAlias,
-            child: InkWell(
-              onTap: onTap,
-              child: SizedBox.square(
-                dimension: 232,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    ShakerBottle(
-                      // 振る前は粉が底にたまり、振るほど混ざってココア色になる
-                      mix: counting ? progress : (shookToday ? 1 : 0),
-                      active: listening,
-                      height: 116,
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      label,
-                      style: AppFonts.heading(
-                        listening ? 30 : 22,
-                        color: listening ? AppColors.primary : AppColors.ink,
+      child: Container(
+        width: 280,
+        height: 280,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: listening ? AppColors.cheerSoft : AppColors.primarySoft,
+        ),
+        child: Container(
+          width: 252,
+          height: 252,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: listening
+                ? AppColors.cheer.withValues(alpha: 0.35)
+                : Colors.transparent,
+          ),
+          child: Semantics(
+            button: true,
+            label: label.replaceAll('\n', ''),
+            child: Material(
+              color: coreColor,
+              shape: const CircleBorder(),
+              elevation: 8,
+              shadowColor: coreColor.withValues(alpha: 0.6),
+              child: InkWell(
+                customBorder: const CircleBorder(),
+                onTap: onTap,
+                child: SizedBox.square(
+                  dimension: 224,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      ShakerBottle(
+                        // 振る前は粉が底にたまり、振るほど混ざってココア色になる
+                        mix: switch (state) {
+                          _ShakeState.listening || _ShakeState.sending => progress,
+                          _ => shookToday ? 1 : 0,
+                        },
+                        active: listening,
+                        height: 112,
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 4),
+                      Text(
+                        label,
+                        textAlign: TextAlign.center,
+                        style: AppFonts.heading(19, color: textColor),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -324,32 +378,67 @@ class _PlateButton extends StatelessWidget {
   }
 }
 
-class _StatusLine extends StatelessWidget {
-  const _StatusLine({required this.state, required this.hits, required this.counting});
+class _ShakeProgress extends StatelessWidget {
+  const _ShakeProgress({required this.progress});
+
+  final double progress;
+
+  @override
+  Widget build(BuildContext context) {
+    final hits = (progress * ShakeDetector.requiredHits).round();
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'シェイク検知中…',
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+            ),
+            Text(
+              '$hits / ${ShakeDetector.requiredHits}',
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: AppColors.primary,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(5),
+          child: LinearProgressIndicator(
+            value: progress,
+            minHeight: 10,
+            backgroundColor: AppColors.line,
+            color: AppColors.cheer,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _HintText extends StatelessWidget {
+  const _HintText({required this.state});
 
   final _ShakeState state;
-  final int hits;
-  final bool counting;
 
   @override
   Widget build(BuildContext context) {
     final text = switch (state) {
-      _ShakeState.idle => '押してから、シェイカーを ${ShakeDetector.requiredHits}回 しっかり振る',
-      _ShakeState.listening => '$hits / ${ShakeDetector.requiredHits} 回（もう一度押すと中止）',
+      _ShakeState.idle => 'ボタンを押してから、シェイカーを持って振ってね',
+      _ShakeState.listening => 'しっかり振ると記録されます（もう一度タップで中止）',
       _ShakeState.sending => '',
-      _ShakeState.denied => 'センサーの使用が許可されていません。\n'
-          'iPhone は「設定 > Safari」で許可してから、もう一度押してください。',
-      _ShakeState.unsupported => 'この端末では振っても検知できません。\nスマホのブラウザで開いてください。',
+      _ShakeState.denied => 'センサーの使用が許可されませんでした。\n'
+          'iPhone は「設定 > Safari」から許可を確認してください。',
+      _ShakeState.unsupported => 'この端末では振る検知が使えません。\nスマホのブラウザで開いてください。',
     };
     return Text(
       text,
       textAlign: TextAlign.center,
-      style: TextStyle(
-        fontSize: 13,
-        height: 1.5,
-        color: counting ? AppColors.ink : AppColors.muted,
-        fontWeight: counting ? FontWeight.w700 : FontWeight.w500,
-      ),
+      style: const TextStyle(fontSize: 13, color: AppColors.muted, height: 1.5),
     );
   }
 }

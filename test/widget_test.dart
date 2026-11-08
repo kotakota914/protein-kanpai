@@ -89,9 +89,8 @@ void main() {
     testWidgets('ログインするとホームが表示される', (tester) async {
       await pumpSignedIn(tester);
       expect(find.text('今日のプロテイン'), findsOneWidget);
-      expect(find.text('3'), findsOneWidget);
-      expect(find.text('日連続'), findsOneWidget);
-      expect(find.text('はなこが振ってる'), findsOneWidget);
+      expect(find.text('3日連続'), findsOneWidget);
+      expect(find.text('はなこさんが振っています'), findsOneWidget);
     });
 
     testWidgets('振ると乾杯の結果シートが出る', (tester) async {
@@ -100,23 +99,21 @@ void main() {
       await tester.tap(find.text('（開発用）振ったことにする'));
       await tester.pump(const Duration(seconds: 1));
       await tester.pumpAndSettle();
-      expect(find.text('乾杯！'), findsOneWidget);
-      expect(find.text('はなこと同時に振った。今日の筋トレ、ふたりで完了。'), findsOneWidget);
-      await tester.tap(find.text('閉じる'));
+      expect(find.text('はなこさんと乾杯！'), findsOneWidget);
+      await tester.tap(find.text('OK'));
       await tester.pumpAndSettle();
-      expect(find.text('4'), findsWidgets);
-      expect(find.text('今日の分は記録済み'), findsOneWidget);
+      expect(find.text('4日連続'), findsOneWidget);
     });
 
     testWidgets('下のタブで各画面に移動できる', (tester) async {
       await pumpSignedIn(tester);
       await tester.tap(find.text('カレンダー').last);
       await tester.pumpAndSettle();
-      expect(find.text('2026年11月'), findsOneWidget);
+      expect(find.text('2026年 11月'), findsOneWidget);
 
       await tester.tap(find.text('友達').last);
       await tester.pumpAndSettle();
-      expect(find.text('いま振ってる'), findsOneWidget);
+      expect(find.text('いま振っている友達'), findsOneWidget);
 
       await tester.tap(find.text('プロフィール').last);
       await tester.pumpAndSettle();

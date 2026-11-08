@@ -4,14 +4,15 @@ import 'package:flutter/material.dart';
 
 import '../app/theme.dart';
 
-/// 一段上の面（角は小さめ・影なし）。ジムのゴムマットに置いた台のイメージ。
+/// 白いカード（角丸 20・うすい影）。Figma の各カードと同じ見た目。
 class AppCard extends StatelessWidget {
   const AppCard({
     super.key,
     required this.child,
-    this.padding = const EdgeInsets.all(16),
+    this.padding = const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
     this.color = AppColors.surface,
     this.borderColor,
+    this.shadow = true,
     this.onTap,
   });
 
@@ -19,37 +20,51 @@ class AppCard extends StatelessWidget {
   final EdgeInsetsGeometry padding;
   final Color color;
   final Color? borderColor;
+  final bool shadow;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: color,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
-        side: borderColor != null
-            ? BorderSide(color: borderColor!, width: 1.5)
-            : BorderSide.none,
+    final radius = BorderRadius.circular(20);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: radius,
+        boxShadow: shadow
+            ? const [
+                BoxShadow(
+                  color: Color(0x14664019),
+                  blurRadius: 16,
+                  offset: Offset(0, 4),
+                ),
+              ]
+            : null,
       ),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(padding: padding, child: child),
+      child: Material(
+        color: color,
+        shape: RoundedRectangleBorder(
+          borderRadius: radius,
+          side: borderColor != null
+              ? BorderSide(color: borderColor!, width: 1.5)
+              : BorderSide.none,
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(padding: padding, child: child),
+        ),
       ),
     );
   }
 }
 
-/// 友達・自分のアイコン。写真があれば写真、なければ名前の 1 文字。
+/// 友達・自分のアイコン。写真があれば写真、なければ名前の 1 文字を丸に入れる。
 class Avatar extends StatelessWidget {
   const Avatar({
     super.key,
     required this.initial,
     this.photo,
-    this.color = AppColors.surface,
-    this.textColor = AppColors.ink,
+    this.color = AppColors.cheerSoft,
     this.size = 44,
-    this.ringColor,
   });
 
   final String initial;
@@ -57,19 +72,15 @@ class Avatar extends StatelessWidget {
   /// 自分で選んだ写真（なければ null）
   final Uint8List? photo;
   final Color color;
-  final Color textColor;
   final double size;
 
-  /// 外側の輪（乾杯できる友達などを目立たせる）
-  final Color? ringColor;
-
-  /// 名前ごとに文字の色を変える（同じ名前なら同じ色）
+  /// 名前ごとに色を変える（同じ名前なら同じ色）
   static Color colorFor(String name) {
     const palette = [
-      AppColors.primary,
-      AppColors.cheer,
-      Color(0xFF39C27A), // 10kg プレートの緑
-      Color(0xFFFF4D4D), // 25kg プレートの赤
+      AppColors.cheerSoft,
+      AppColors.primarySoft,
+      Color(0xFFE6F2E8),
+      Color(0xFFE6EEF8),
     ];
     return palette[name.hashCode.abs() % palette.length];
   }
@@ -81,11 +92,7 @@ class Avatar extends StatelessWidget {
       width: size,
       height: size,
       alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: color,
-        shape: BoxShape.circle,
-        border: ringColor != null ? Border.all(color: ringColor!, width: 2.5) : null,
-      ),
+      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
       clipBehavior: Clip.antiAlias,
       child: photo != null
           ? Image.memory(
@@ -95,7 +102,13 @@ class Avatar extends StatelessWidget {
               fit: BoxFit.cover,
               gaplessPlayback: true,
             )
-          : Text(initial, style: AppFonts.heading(size * 0.42, color: textColor)),
+          : Text(
+              initial,
+              style: AppFonts.heading(
+                size * 0.4,
+                color: color == AppColors.primary ? Colors.white : AppColors.ink,
+              ),
+            ),
     );
   }
 }
@@ -107,7 +120,7 @@ class IconBadge extends StatelessWidget {
     this.icon,
     this.child,
     this.size = 48,
-    this.background = AppColors.surface,
+    this.background = AppColors.primarySoft,
     this.foreground = AppColors.primary,
   });
 
@@ -130,7 +143,7 @@ class IconBadge extends StatelessWidget {
   }
 }
 
-/// 小さな札（「乾杯OK」など）。角は小さく、ジムのテープのような見た目。
+/// 小さな丸いラベル（「乾杯OK」「Gemini で読み取り」など）
 class Pill extends StatelessWidget {
   const Pill({
     super.key,
@@ -154,10 +167,10 @@ class Pill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         color: background,
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(999),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -180,7 +193,7 @@ class Pill extends StatelessWidget {
   }
 }
 
-/// 小見出し
+/// 小見出し（「いま振っている友達」など）
 class SectionLabel extends StatelessWidget {
   const SectionLabel(this.text, {super.key});
 
@@ -199,7 +212,8 @@ class SectionLabel extends StatelessWidget {
   }
 }
 
-/// アイコンの対応表。シェイカーは widgets/shaker.dart の ShakerIcon を使う。
+/// アイコンの対応表（Figma のアイコンに近い Material アイコン）。
+/// シェイカーは Material にないため widgets/shaker.dart の ShakerIcon を使う。
 class AppIcons {
   static const cheer = Icons.wine_bar_rounded;
   static const flame = Icons.local_fire_department_rounded;

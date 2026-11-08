@@ -6,7 +6,7 @@ import '../../data/models.dart';
 import '../../widgets/common.dart';
 import '../../widgets/shaker.dart';
 
-/// 04 カレンダー：振った日がアンバー、乾杯した日が青のマスになる
+/// 04 カレンダー：振った日・乾杯した日のスタンプが並ぶ
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});
 
@@ -17,11 +17,6 @@ class CalendarScreen extends StatefulWidget {
 class _CalendarScreenState extends State<CalendarScreen> {
   DateTime? _month; // 表示中の月（1日）
   DateTime? _selected;
-
-  void _moveMonth(DateTime month, int delta) => setState(() {
-        _month = DateTime(month.year, month.month + delta);
-        _selected = null;
-      });
 
   @override
   Widget build(BuildContext context) {
@@ -37,91 +32,104 @@ class _CalendarScreenState extends State<CalendarScreen> {
     ];
     final cheers = monthLogs.fold(0, (sum, l) => sum + l.cheerWith.length);
     final longest = _longestStreak(month, daysInMonth, logs);
+
     final selected = _selected;
+    final selectedLog = selected != null ? logs[selected] : null;
 
     return Scaffold(
       appBar: AppBar(title: const Text('カレンダー')),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
+        padding: const EdgeInsets.fromLTRB(20, 6, 20, 24),
         children: [
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('${month.year}年${month.month}月', style: AppFonts.heading(20)),
-              const Spacer(),
-              IconButton(
-                onPressed: () => _moveMonth(month, -1),
+              _NavButton(
+                icon: Icons.chevron_left_rounded,
                 tooltip: '前の月',
-                icon: const Icon(Icons.chevron_left_rounded),
+                onTap: () => setState(() {
+                  _month = DateTime(month.year, month.month - 1);
+                  _selected = null;
+                }),
               ),
-              IconButton(
-                onPressed: () => _moveMonth(month, 1),
+              Text('${month.year}年 ${month.month}月', style: AppFonts.heading(20)),
+              _NavButton(
+                icon: Icons.chevron_right_rounded,
                 tooltip: '次の月',
-                icon: const Icon(Icons.chevron_right_rounded),
+                onTap: () => setState(() {
+                  _month = DateTime(month.year, month.month + 1);
+                  _selected = null;
+                }),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 14),
           Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text(
-                '${monthLogs.length}',
-                style: AppFonts.heading(76, color: AppColors.primary)
-                    .copyWith(height: 0.95),
+              _Stat(
+                leading: const ShakerIcon(size: 18, liquidColor: AppColors.cocoa),
+                label: '今月振った日',
+                value: '${monthLogs.length}日',
               ),
-              const SizedBox(width: 8),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              const SizedBox(width: 10),
+              _Stat(
+                leading: const Icon(AppIcons.cheer, size: 18, color: AppColors.primary),
+                label: '乾杯',
+                value: '$cheers回',
+              ),
+              const SizedBox(width: 10),
+              _Stat(
+                leading: const Icon(AppIcons.flame, size: 18, color: AppColors.primary),
+                label: '最長連続',
+                value: '$longest日',
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          AppCard(
+            padding: const EdgeInsets.fromLTRB(12, 16, 12, 14),
+            child: Column(
+              children: [
+                Row(
                   children: [
-                    Text('日 振った', style: AppFonts.heading(20)),
-                    Text(
-                      '乾杯 $cheers回　最長 $longest日連続',
-                      style: const TextStyle(fontSize: 13, color: AppColors.muted),
-                    ),
+                    for (final d in const ['日', '月', '火', '水', '木', '金', '土'])
+                      Expanded(
+                        child: Center(
+                          child: Text(
+                            d,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.muted,
+                            ),
+                          ),
+                        ),
+                      ),
                   ],
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          Row(
-            children: [
-              for (final d in const ['日', '月', '火', '水', '木', '金', '土'])
-                Expanded(
-                  child: Center(
-                    child: Text(
-                      d,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.muted,
-                      ),
-                    ),
-                  ),
+                const SizedBox(height: 6),
+                _MonthGrid(
+                  month: month,
+                  today: today,
+                  logs: logs,
+                  selected: selected,
+                  onSelect: (day) => setState(() => _selected = day),
                 ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          _MonthGrid(
-            month: month,
-            today: today,
-            logs: logs,
-            selected: selected,
-            onSelect: (day) => setState(() => _selected = day),
-          ),
-          const SizedBox(height: 10),
-          const Row(
-            children: [
-              _Legend(color: AppColors.primary, label: '振った日'),
-              SizedBox(width: 16),
-              _Legend(color: AppColors.cheer, label: '乾杯した日'),
-            ],
+                const SizedBox(height: 8),
+                const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _Legend(color: AppColors.primary, label: '振った日'),
+                    SizedBox(width: 14),
+                    _Legend(color: AppColors.cheer, label: '乾杯した日'),
+                  ],
+                ),
+              ],
+            ),
           ),
           if (selected != null) ...[
-            const SizedBox(height: 16),
-            _DayDetail(day: selected, log: logs[selected]),
+            const SizedBox(height: 14),
+            _DayDetail(day: selected, log: selectedLog),
           ],
         ],
       ),
@@ -182,7 +190,7 @@ class _MonthGrid extends StatelessWidget {
 
   Widget _cell(int dayNumber, int daysInMonth) {
     if (dayNumber < 1 || dayNumber > daysInMonth) {
-      return const SizedBox(height: 48);
+      return const SizedBox(height: 56);
     }
     final day = DateTime(month.year, month.month, dayNumber);
     final log = logs[day];
@@ -190,45 +198,69 @@ class _MonthGrid extends StatelessWidget {
     final isFuture = day.isAfter(today);
     final isSelected = day == selected;
 
-    final (Color bg, Color fg) = switch (log) {
-      ShakeLog(cheered: true) => (AppColors.cheer, AppColors.ink),
-      ShakeLog() => (AppColors.primary, AppColors.onPrimary),
-      null => (
-          Colors.transparent,
-          isToday
-              ? AppColors.primary
-              : (isFuture ? AppColors.line : AppColors.muted),
+    final Widget dot;
+    if (log != null) {
+      dot = log.cheered
+          ? const IconBadge(
+              icon: AppIcons.cheer,
+              size: 36,
+              background: AppColors.cheer,
+              foreground: AppColors.ink,
+            )
+          : const IconBadge(
+              size: 36,
+              background: AppColors.primary,
+              child: ShakerIcon(size: 22, color: Colors.white, liquidColor: AppColors.milk),
+            );
+    } else {
+      dot = Container(
+        width: 36,
+        height: 36,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: isFuture
+              ? Colors.transparent
+              : (isToday ? AppColors.surface : AppColors.line.withValues(alpha: 0.5)),
+          border: isToday ? Border.all(color: AppColors.primary, width: 2) : null,
         ),
-    };
+        child: Text(
+          '$dayNumber',
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: isToday ? FontWeight.w700 : FontWeight.w400,
+            color: isToday
+                ? AppColors.primary
+                : (isFuture ? AppColors.muted : AppColors.ink),
+          ),
+        ),
+      );
+    }
 
     return Semantics(
       button: true,
-      selected: isSelected,
       label: '${month.month}月$dayNumber日'
           '${log == null ? '' : (log.cheered ? ' 乾杯した日' : ' 振った日')}',
       child: InkWell(
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(12),
         onTap: () => onSelect(day),
-        child: Padding(
-          padding: const EdgeInsets.all(3),
-          child: Container(
-            height: 42,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: bg,
-              borderRadius: BorderRadius.circular(6),
-              border: isSelected
-                  ? Border.all(color: AppColors.ink, width: 2)
-                  : (isToday && log == null
-                      ? Border.all(color: AppColors.primary, width: 2)
-                      : null),
-            ),
-            child: Text(
-              '$dayNumber',
-              style: log != null || isToday
-                  ? AppFonts.heading(15, color: fg)
-                  : TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: fg),
-            ),
+        child: Container(
+          height: 56,
+          decoration: isSelected
+              ? BoxDecoration(
+                  color: AppColors.primarySoft,
+                  borderRadius: BorderRadius.circular(12),
+                )
+              : null,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              dot,
+              Text(
+                log != null ? '$dayNumber' : '',
+                style: const TextStyle(fontSize: 10, color: AppColors.muted),
+              ),
+            ],
           ),
         ),
       ),
@@ -245,31 +277,27 @@ class _DayDetail extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final log = this.log;
-    final title = switch (log) {
-      null => 'この日は振っていない',
-      ShakeLog(cheered: true) => '${log.cheerWith.join('・')}と乾杯した',
-      _ => 'プロテインを振った',
-    };
+    final title = log == null
+        ? 'この日は振っていません'
+        : (log.cheered
+            ? '${log.cheerWith.join('さん・')}さんと乾杯しました'
+            : 'プロテインを振りました');
     return AppCard(
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
       child: Row(
         children: [
-          if (log?.cheered == true)
-            const IconBadge(
-              icon: AppIcons.cheer,
-              size: 40,
-              background: AppColors.cheer,
-              foreground: AppColors.ink,
-            )
-          else
-            IconBadge(
-              size: 40,
-              background: AppColors.background,
-              child: ShakerIcon(
-                size: 22,
-                color: log == null ? AppColors.muted : AppColors.primary,
-                liquidColor: log == null ? Colors.transparent : AppColors.cocoa,
-              ),
-            ),
+          log?.cheered == true
+              ? const IconBadge(
+                  icon: AppIcons.cheer,
+                  size: 40,
+                  background: AppColors.cheerSoft,
+                  foreground: AppColors.ink,
+                )
+              : const IconBadge(
+                  size: 40,
+                  background: AppColors.primarySoft,
+                  child: ShakerIcon(size: 22, liquidColor: AppColors.cocoa),
+                ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -279,11 +307,64 @@ class _DayDetail extends StatelessWidget {
                   '${day.month}月${day.day}日（${weekdayLabels[day.weekday - 1]}）',
                   style: const TextStyle(fontSize: 12, color: AppColors.muted),
                 ),
-                Text(title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+                Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
               ],
             ),
           ),
+          if (log?.cheered == true)
+            Avatar(
+              initial: log!.cheerWith.first.substring(0, 1),
+              color: Avatar.colorFor(log.cheerWith.first),
+              size: 32,
+            ),
         ],
+      ),
+    );
+  }
+}
+
+class _NavButton extends StatelessWidget {
+  const _NavButton({required this.icon, required this.tooltip, required this.onTap});
+
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton.outlined(
+      onPressed: onTap,
+      tooltip: tooltip,
+      icon: Icon(icon),
+      style: IconButton.styleFrom(
+        backgroundColor: AppColors.surface,
+        side: const BorderSide(color: AppColors.line),
+      ),
+    );
+  }
+}
+
+class _Stat extends StatelessWidget {
+  const _Stat({required this.leading, required this.label, required this.value});
+
+  final Widget leading;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: AppCard(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            leading,
+            const SizedBox(height: 4),
+            Text(label, style: const TextStyle(fontSize: 11, color: AppColors.muted)),
+            Text(value, style: AppFonts.heading(20)),
+          ],
+        ),
       ),
     );
   }
@@ -301,12 +382,12 @@ class _Legend extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          width: 12,
-          height: 12,
-          decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(3)),
+          width: 10,
+          height: 10,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
         const SizedBox(width: 6),
-        Text(label, style: const TextStyle(fontSize: 12, color: AppColors.muted)),
+        Text(label, style: const TextStyle(fontSize: 11, color: AppColors.muted)),
       ],
     );
   }

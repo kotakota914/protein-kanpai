@@ -61,15 +61,15 @@ flutter:
   # 日本語フォントはアプリに同梱する（ネットから読み込まない）。
   # どちらも SIL Open Font License 1.1（著作物利用シートに記載する）。
   fonts:
-    - family: DelaGothicOne
+    - family: NotoSansJP
       fonts:
-        - asset: assets/fonts/DelaGothicOne-Regular.ttf
-    - family: ZenKakuGothicNew
-      fonts:
-        - asset: assets/fonts/ZenKakuGothicNew-Medium.ttf
-          weight: 500
-        - asset: assets/fonts/ZenKakuGothicNew-Bold.ttf
+        - asset: assets/fonts/NotoSansJP-Regular.ttf
+        - asset: assets/fonts/NotoSansJP-Bold.ttf
           weight: 700
+    - family: ZenMaruGothic
+      fonts:
+        - asset: assets/fonts/ZenMaruGothic-Black.ttf
+          weight: 900
 
   # To add assets to your application, add an assets section, like this:
   # assets:
