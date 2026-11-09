@@ -1,5 +1,6 @@
 import 'shake_detector_stub.dart'
-    if (dart.library.js_interop) 'shake_detector_web.dart' as impl;
+    if (dart.library.js_interop) 'shake_detector_web.dart'
+    as impl;
 
 /// シェイカーを振ったことを検知する。
 ///

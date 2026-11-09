@@ -18,6 +18,19 @@ class AppColors {
   static const cocoa = Color(0xFF9A6240);
   static const cocoaDark = Color(0xFF6E4029);
   static const milk = Color(0xFFF4E4D0); // 泡
+
+  /// 味ごとのシェイクの色（好きなプロテインの味でシェイカーの中身が変わる）
+  static Color flavor(String? flavor) {
+    final f = flavor ?? '';
+    if (f.contains('バニラ')) return const Color(0xFFE9CF94);
+    if (f.contains('ストロベリー') || f.contains('いちご')) {
+      return const Color(0xFFEE8FA6);
+    }
+    if (f.contains('抹茶')) return const Color(0xFF8DB25C);
+    if (f.contains('バナナ')) return const Color(0xFFF2D35B);
+    if (f.contains('ミルク') || f.contains('プレーン')) return const Color(0xFFF1E7D8);
+    return cocoa; // ココア・チョコ・不明
+  }
 }
 
 /// 文字の設定。見出しは丸みのある Zen Maru Gothic、本文は Noto Sans JP。

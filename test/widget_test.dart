@@ -3,14 +3,15 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:protein_app/app/theme.dart';
 import 'package:protein_app/data/app_repository.dart';
+import 'package:protein_app/data/growth.dart';
 import 'package:protein_app/main.dart';
 
 /// 2026-11-07（土）を「今日」として固定する
 DateTime fixedNow() => DateTime(2026, 11, 7, 12);
 
-AppRepository newRepo() =>
-    AppRepository(clock: fixedNow, random: Random(1));
+AppRepository newRepo() => AppRepository(clock: fixedNow, random: Random(1));
 
 void main() {
   group('AppRepository', () {
@@ -69,7 +70,54 @@ void main() {
       final kenta = repo.friends.firstWhere((f) => f.name == 'けんた');
       expect(kenta.following, isFalse);
       repo.toggleFollow(kenta.id);
-      expect(repo.friends.firstWhere((f) => f.id == kenta.id).following, isTrue);
+      expect(
+        repo.friends.firstWhere((f) => f.id == kenta.id).following,
+        isTrue,
+      );
+    });
+  });
+
+  group('キャラ育成・味の色', () {
+    test('振った日数の合計で段階が決まる', () {
+      expect(stageFor(0).name, 'ひよっこ');
+      expect(stageFor(2).name, 'ひよっこ');
+      expect(stageFor(3).name, 'ちょいマッチョ');
+      expect(stageFor(7).name, '細マッチョ');
+      expect(stageFor(14).name, 'マッチョ');
+      expect(stageFor(30).name, 'ムキムキ');
+      expect(nextStageAfter(stageFor(30)), isNull);
+    });
+
+    test('14日目に振るとマッチョに成長する（同じ日に何回振っても1日分）', () async {
+      var now = fixedNow();
+      final repo = AppRepository(clock: () => now, random: Random(1));
+      expect(repo.stage.name, '細マッチョ'); // 仮データは 7 日分
+      final levelUps = <String>[];
+      for (var day = 0; day < 7; day++) {
+        final first = await repo.recordShake();
+        final second = await repo.recordShake();
+        expect(second.levelUpTo, isNull);
+        if (first.levelUpTo != null) levelUps.add(first.levelUpTo!.name);
+        now = now.add(const Duration(days: 1));
+      }
+      expect(repo.totalDays, 14);
+      expect(levelUps, ['マッチョ']);
+    });
+
+    test('味でシェイクの色が変わる', () {
+      expect(AppColors.flavor('ココア味'), AppColors.cocoa);
+      expect(AppColors.flavor(null), AppColors.cocoa);
+      expect(AppColors.flavor('ストロベリー味'), isNot(AppColors.cocoa));
+      expect(AppColors.flavor('抹茶味'), isNot(AppColors.flavor('バニラ味')));
+    });
+
+    test('袋の写真を読むと好きなプロテインが入り、色が変わる', () async {
+      final repo = newRepo();
+      await repo.scanProtein();
+      final first = repo.liquidColor;
+      await repo.scanProtein();
+      expect(repo.favoriteProtein, isNotNull);
+      expect(repo.liquidColor, isNot(first));
     });
   });
 
@@ -91,11 +139,16 @@ void main() {
       expect(find.text('今日のプロテイン'), findsOneWidget);
       expect(find.text('3日連続'), findsOneWidget);
       expect(find.text('はなこさんが振っています'), findsOneWidget);
+      expect(find.text('細マッチョ'), findsOneWidget);
     });
 
     testWidgets('振ると乾杯の結果シートが出る', (tester) async {
       await pumpSignedIn(tester);
-      await tester.ensureVisible(find.text('（開発用）振ったことにする'));
+      await tester.scrollUntilVisible(
+        find.text('（開発用）振ったことにする'),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
       await tester.tap(find.text('（開発用）振ったことにする'));
       await tester.pump(const Duration(seconds: 1));
       await tester.pumpAndSettle();

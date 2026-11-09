@@ -106,7 +106,9 @@ class Avatar extends StatelessWidget {
               initial,
               style: AppFonts.heading(
                 size * 0.4,
-                color: color == AppColors.primary ? Colors.white : AppColors.ink,
+                color: color == AppColors.primary
+                    ? Colors.white
+                    : AppColors.ink,
               ),
             ),
     );

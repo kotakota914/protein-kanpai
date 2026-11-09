@@ -39,8 +39,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Icon(Icons.photo_library_outlined, color: AppColors.primary),
-              title: const Text('写真から選ぶ', style: TextStyle(fontWeight: FontWeight.w700)),
+              leading: const Icon(
+                Icons.photo_library_outlined,
+                color: AppColors.primary,
+              ),
+              title: const Text(
+                '写真から選ぶ',
+                style: TextStyle(fontWeight: FontWeight.w700),
+              ),
               onTap: () {
                 _pickAvatar(repo);
                 Navigator.pop(sheetContext);
@@ -48,7 +54,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             if (repo.avatar != null)
               ListTile(
-                leading: const Icon(Icons.delete_outline, color: AppColors.muted),
+                leading: const Icon(
+                  Icons.delete_outline,
+                  color: AppColors.muted,
+                ),
                 title: const Text('写真を外す'),
                 onTap: () {
                   Navigator.pop(sheetContext);
@@ -133,7 +142,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           decoration: BoxDecoration(
                             color: AppColors.surface,
                             shape: BoxShape.circle,
-                            border: Border.all(color: AppColors.line, width: 1.5),
+                            border: Border.all(
+                              color: AppColors.line,
+                              width: 1.5,
+                            ),
                           ),
                           child: const Icon(
                             Icons.photo_camera,
@@ -181,7 +193,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('好きなプロテイン', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
+                    Text(
+                      '好きなプロテイン',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                     Pill(
                       label: 'Gemini で読み取り',
                       icon: AppIcons.gemini,
@@ -201,7 +219,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         borderRadius: BorderRadius.circular(14),
                       ),
                       alignment: Alignment.center,
-                      child: const ShakerIcon(size: 32, liquidColor: AppColors.cocoa),
+                      child: ShakerIcon(
+                        size: 32,
+                        liquidColor: repo.liquidColor,
+                      ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -209,14 +230,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            fav == null ? 'まだ登録していません' : '${fav.name} ${fav.flavor}',
-                            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                            fav == null
+                                ? 'まだ登録していません'
+                                : '${fav.name} ${fav.flavor}',
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                           Text(
                             fav == null
                                 ? '袋の写真を撮ると自動で登録できます'
                                 : '1食あたり たんぱく質 ${fav.proteinGrams}g',
-                            style: const TextStyle(fontSize: 12, color: AppColors.muted),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: AppColors.muted,
+                            ),
                           ),
                         ],
                       ),
@@ -229,8 +258,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   style: OutlinedButton.styleFrom(
                     minimumSize: const Size.fromHeight(48),
                     foregroundColor: AppColors.primary,
-                    side: const BorderSide(color: AppColors.primary, width: 1.5),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    side: const BorderSide(
+                      color: AppColors.primary,
+                      width: 1.5,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
                     textStyle: const TextStyle(
                       fontFamily: AppFonts.body,
                       fontSize: 14,
@@ -264,11 +298,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   children: [
                     Icon(AppIcons.gemini, size: 18, color: AppColors.gold),
                     SizedBox(width: 6),
-                    Text('今週のふりかえり', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
+                    Text(
+                      '今週のふりかえり',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 8),
-                Text(repo.weeklySummary, style: const TextStyle(fontSize: 13, height: 1.65)),
+                Text(
+                  repo.weeklySummary,
+                  style: const TextStyle(fontSize: 13, height: 1.65),
+                ),
                 const SizedBox(height: 6),
                 const Text(
                   'Gemini が記録をもとに作成',
@@ -280,7 +323,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(height: 16),
           TextButton(
             onPressed: repo.signOut,
-            child: const Text('ログアウト', style: TextStyle(color: AppColors.muted)),
+            child: const Text(
+              'ログアウト',
+              style: TextStyle(color: AppColors.muted),
+            ),
           ),
         ],
       ),
@@ -302,7 +348,10 @@ class _Stat extends StatelessWidget {
         child: Column(
           children: [
             FittedBox(child: Text(value, style: AppFonts.heading(18))),
-            Text(label, style: const TextStyle(fontSize: 11, color: AppColors.muted)),
+            Text(
+              label,
+              style: const TextStyle(fontSize: 11, color: AppColors.muted),
+            ),
           ],
         ),
       ),

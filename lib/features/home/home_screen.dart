@@ -4,8 +4,10 @@ import 'package:flutter/material.dart';
 import '../../app/theme.dart';
 import '../../data/app_repository.dart';
 import '../../data/app_scope.dart';
+import '../../data/growth.dart';
 import '../../shake/shake_detector.dart';
 import '../../widgets/common.dart';
+import '../../widgets/mascot.dart';
 import '../../widgets/shaker.dart';
 import 'shake_result_sheet.dart';
 
@@ -92,6 +94,7 @@ class _HomeScreenState extends State<HomeScreen>
       result,
       myInitial: repo.userInitial,
       myPhoto: repo.avatar,
+      liquidColor: repo.liquidColor,
     );
   }
 
@@ -120,12 +123,15 @@ class _HomeScreenState extends State<HomeScreen>
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
         children: [
           _StreakCard(repo: repo),
+          const SizedBox(height: 12),
+          _CharacterCard(repo: repo),
           const SizedBox(height: 28),
           Center(
             child: _ShakeButton(
               state: _state,
               shookToday: repo.shookToday,
               progress: _progress,
+              liquidColor: repo.liquidColor,
               pulse: _pulse,
               onTap: switch (_state) {
                 _ShakeState.listening => _cancel,
@@ -167,7 +173,10 @@ class _HomeScreenState extends State<HomeScreen>
                         const SizedBox(height: 2),
                         const Text(
                           'いま振ると乾杯できるよ',
-                          style: TextStyle(fontSize: 12, color: AppColors.muted),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: AppColors.muted,
+                          ),
                         ),
                       ],
                     ),
@@ -216,7 +225,10 @@ class _StreakCard extends StatelessWidget {
                     Text('${repo.streak}日連続', style: AppFonts.heading(24)),
                     Text(
                       repo.shookToday ? '今日のスタンプ：ゲット済み' : '今日のスタンプ：まだ',
-                      style: const TextStyle(fontSize: 13, color: AppColors.muted),
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: AppColors.muted,
+                      ),
                     ),
                   ],
                 ),
@@ -242,6 +254,61 @@ class _StreakCard extends StatelessWidget {
   }
 }
 
+/// シェイカーくん：振った日数で 5 段階に育つ
+class _CharacterCard extends StatelessWidget {
+  const _CharacterCard({required this.repo});
+
+  final AppRepository repo;
+
+  @override
+  Widget build(BuildContext context) {
+    final stage = repo.stage;
+    final next = nextStageAfter(stage);
+    final days = repo.totalDays;
+    final progress = next == null
+        ? 1.0
+        : (days - stage.minDays) / (next.minDays - stage.minDays);
+    return AppCard(
+      padding: const EdgeInsets.fromLTRB(12, 12, 18, 12),
+      child: Row(
+        children: [
+          Mascot(level: stage.level, size: 92, liquidColor: repo.liquidColor),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'シェイカーくん Lv.${stage.level}',
+                  style: const TextStyle(fontSize: 12, color: AppColors.muted),
+                ),
+                Text(stage.name, style: AppFonts.heading(22)),
+                const SizedBox(height: 8),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: progress.clamp(0, 1),
+                    minHeight: 8,
+                    backgroundColor: AppColors.line,
+                    color: AppColors.primary,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  next == null
+                      ? '最高段階！ 振った日 $days日'
+                      : 'あと ${next.minDays - days}日 振ると「${next.name}」',
+                  style: const TextStyle(fontSize: 12, color: AppColors.muted),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _DayDot extends StatelessWidget {
   const _DayDot({
     required this.label,
@@ -260,7 +327,10 @@ class _DayDot extends StatelessWidget {
     final isToday = day == today;
     return Column(
       children: [
-        Text(label, style: const TextStyle(fontSize: 11, color: AppColors.muted)),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 11, color: AppColors.muted),
+        ),
         const SizedBox(height: 4),
         Container(
           width: 30,
@@ -269,7 +339,9 @@ class _DayDot extends StatelessWidget {
             shape: BoxShape.circle,
             color: done
                 ? AppColors.primary
-                : (isToday ? AppColors.surface : AppColors.line.withValues(alpha: 0.6)),
+                : (isToday
+                      ? AppColors.surface
+                      : AppColors.line.withValues(alpha: 0.6)),
             border: isToday && !done
                 ? Border.all(color: AppColors.primary, width: 2)
                 : null,
@@ -288,12 +360,16 @@ class _ShakeButton extends StatelessWidget {
     required this.state,
     required this.shookToday,
     required this.progress,
+    required this.liquidColor,
     required this.pulse,
     required this.onTap,
   });
 
   final _ShakeState state;
   final bool shookToday;
+
+  /// 好きなプロテインの味の色
+  final Color liquidColor;
 
   /// 振った回数の進み具合（0〜1）。シェイカーの中身の混ざり具合に使う
   final double progress;
@@ -354,11 +430,13 @@ class _ShakeButton extends StatelessWidget {
                       ShakerBottle(
                         // 振る前は粉が底にたまり、振るほど混ざってココア色になる
                         mix: switch (state) {
-                          _ShakeState.listening || _ShakeState.sending => progress,
+                          _ShakeState.listening ||
+                          _ShakeState.sending => progress,
                           _ => shookToday ? 1 : 0,
                         },
                         active: listening,
                         height: 112,
+                        liquidColor: liquidColor,
                       ),
                       const SizedBox(height: 4),
                       Text(
@@ -431,8 +509,9 @@ class _HintText extends StatelessWidget {
       _ShakeState.idle => 'ボタンを押してから、シェイカーを持って振ってね',
       _ShakeState.listening => 'しっかり振ると記録されます（もう一度タップで中止）',
       _ShakeState.sending => '',
-      _ShakeState.denied => 'センサーの使用が許可されませんでした。\n'
-          'iPhone は「設定 > Safari」から許可を確認してください。',
+      _ShakeState.denied =>
+        'センサーの使用が許可されませんでした。\n'
+            'iPhone は「設定 > Safari」から許可を確認してください。',
       _ShakeState.unsupported => 'この端末では振る検知が使えません。\nスマホのブラウザで開いてください。',
     };
     return Text(

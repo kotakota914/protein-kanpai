@@ -1,7 +1,11 @@
 import 'dart:math';
+import 'dart:typed_data';
 
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 
+import '../app/theme.dart';
+
+import 'growth.dart';
 import 'models.dart';
 
 /// 画面が使うデータの窓口。
@@ -11,8 +15,8 @@ import 'models.dart';
 /// 画面側のコードは変えなくてよいように、公開しているメソッドの形は保つ。
 class AppRepository extends ChangeNotifier {
   AppRepository({DateTime Function()? clock, Random? random})
-      : _clock = clock ?? DateTime.now,
-        _random = random ?? Random() {
+    : _clock = clock ?? DateTime.now,
+      _random = random ?? Random() {
     _seed();
   }
 
@@ -98,12 +102,16 @@ class AppRepository extends ChangeNotifier {
 
   int get totalDays => _logs.length;
 
+  /// キャラクター（シェイカーくん）のいまの段階。振った日数の合計で決まる
+  GrowthStage get stage => stageFor(totalDays);
+
   /// 今週（月曜はじまり）振った日数
   int get daysThisWeek {
     final monday = today.subtract(Duration(days: today.weekday - 1));
-    return List.generate(7, (i) => monday.add(Duration(days: i)))
-        .where(_logs.containsKey)
-        .length;
+    return List.generate(
+      7,
+      (i) => monday.add(Duration(days: i)),
+    ).where(_logs.containsKey).length;
   }
 
   int get totalCheers =>
@@ -116,6 +124,7 @@ class AppRepository extends ChangeNotifier {
   Future<ShakeResult> recordShake() async {
     await Future<void>.delayed(const Duration(milliseconds: 500));
     final firstToday = !shookToday;
+    final stageBefore = stage;
 
     // モック：いま振っている友達がいれば乾杯成立。いなければ半分の確率で成立
     final following = _friends.where((f) => f.following).toList();
@@ -123,8 +132,8 @@ class AppRepository extends ChangeNotifier {
     final String? cheer = shaking.isNotEmpty
         ? shaking.first.name
         : (following.isNotEmpty && _random.nextBool()
-            ? following[_random.nextInt(following.length)].name
-            : null);
+              ? following[_random.nextInt(following.length)].name
+              : null);
 
     final previous = _logs[today]?.cheerWith ?? const <String>[];
     _logs[today] = ShakeLog(
@@ -152,11 +161,13 @@ class AppRepository extends ChangeNotifier {
       );
     }
     notifyListeners();
+    final stageAfter = stage;
     return ShakeResult(
       firstToday: firstToday,
       streak: streak,
       bonusPoints: bonus,
       cheerWith: cheer,
+      levelUpTo: stageAfter.level > stageBefore.level ? stageAfter : null,
     );
   }
 
@@ -196,12 +207,23 @@ class AppRepository extends ChangeNotifier {
   /// TODO(backend): 写真を Cloud Run に送り、Gemini で読み取った結果を返す。
   Future<Protein> scanProtein() async {
     await Future<void>.delayed(const Duration(milliseconds: 1500));
-    const result =
-        Protein(name: 'ホエイプロテイン', flavor: 'ココア味', proteinGrams: 20);
+    // モック：読み取るたびに別の味を返し、シェイカーの色が変わる様子を確かめられるようにする
+    const samples = [
+      Protein(name: 'ホエイプロテイン', flavor: 'ココア味', proteinGrams: 20),
+      Protein(name: 'ホエイプロテイン', flavor: 'ストロベリー味', proteinGrams: 19),
+      Protein(name: 'ソイプロテイン', flavor: '抹茶味', proteinGrams: 18),
+      Protein(name: 'ホエイプロテイン', flavor: 'バニラ味', proteinGrams: 21),
+    ];
+    final result = samples[_scanCount++ % samples.length];
     _favorite = result;
     notifyListeners();
     return result;
   }
+
+  int _scanCount = 0;
+
+  /// シェイクの色（好きなプロテインの味。未登録ならココア）
+  Color get liquidColor => AppColors.flavor(_favorite?.flavor);
 
   /// 今週のふりかえり文。
   ///

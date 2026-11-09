@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../app/theme.dart';
 import '../../data/models.dart';
 import '../../widgets/common.dart';
+import '../../widgets/mascot.dart';
 import '../../widgets/shaker.dart';
 
 /// 03 振った結果（スタンプ・乾杯・ボーナス）を下から出して見せる
@@ -13,6 +14,7 @@ Future<void> showShakeResultSheet(
   ShakeResult result, {
   required String myInitial,
   Uint8List? myPhoto,
+  Color liquidColor = AppColors.cocoa,
 }) {
   return showModalBottomSheet<void>(
     context: context,
@@ -23,8 +25,12 @@ Future<void> showShakeResultSheet(
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
     ),
-    builder: (context) =>
-        _ShakeResultSheet(result: result, myInitial: myInitial, myPhoto: myPhoto),
+    builder: (context) => _ShakeResultSheet(
+      result: result,
+      myInitial: myInitial,
+      myPhoto: myPhoto,
+      liquidColor: liquidColor,
+    ),
   );
 }
 
@@ -33,11 +39,13 @@ class _ShakeResultSheet extends StatelessWidget {
     required this.result,
     required this.myInitial,
     required this.myPhoto,
+    required this.liquidColor,
   });
 
   final ShakeResult result;
   final String myInitial;
   final Uint8List? myPhoto;
+  final Color liquidColor;
 
   @override
   Widget build(BuildContext context) {
@@ -67,7 +75,7 @@ class _ShakeResultSheet extends StatelessWidget {
                       myPhoto: myPhoto,
                       friend: cheer.substring(0, 1),
                     )
-                  : const ShakerBottle(mix: 1, height: 120),
+                  : ShakerBottle(mix: 1, height: 120, liquidColor: liquidColor),
             ),
             const SizedBox(height: 16),
             Text(title, style: AppFonts.heading(28)),
@@ -75,12 +83,20 @@ class _ShakeResultSheet extends StatelessWidget {
             Text(
               message,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 14, color: AppColors.muted, height: 1.6),
+              style: const TextStyle(
+                fontSize: 14,
+                color: AppColors.muted,
+                height: 1.6,
+              ),
             ),
             const SizedBox(height: 20),
             Row(
               children: [
-                _Badge(icon: AppIcons.flame, label: '連続', value: '${result.streak}日'),
+                _Badge(
+                  icon: AppIcons.flame,
+                  label: '連続',
+                  value: '${result.streak}日',
+                ),
                 if (result.bonusPoints > 0) ...[
                   const SizedBox(width: 10),
                   _Badge(
@@ -97,6 +113,14 @@ class _ShakeResultSheet extends StatelessWidget {
                 ),
               ],
             ),
+            if (result.levelUpTo case final stage?) ...[
+              const SizedBox(height: 14),
+              _LevelUp(
+                level: stage.level,
+                name: stage.name,
+                liquidColor: liquidColor,
+              ),
+            ],
             const SizedBox(height: 24),
             FilledButton(
               onPressed: () => Navigator.of(context).pop(),
@@ -111,7 +135,11 @@ class _ShakeResultSheet extends StatelessWidget {
 
 /// 自分と友達のアイコンの間にグラス
 class _CheersPair extends StatelessWidget {
-  const _CheersPair({required this.me, required this.myPhoto, required this.friend});
+  const _CheersPair({
+    required this.me,
+    required this.myPhoto,
+    required this.friend,
+  });
 
   final String me;
   final Uint8List? myPhoto;
@@ -136,7 +164,11 @@ class _CheersPair extends StatelessWidget {
           ),
           Positioned(
             right: 0,
-            child: Avatar(initial: friend, color: AppColors.cheerSoft, size: 64),
+            child: Avatar(
+              initial: friend,
+              color: AppColors.cheerSoft,
+              size: 64,
+            ),
           ),
           Container(
             width: 88,
@@ -185,6 +217,49 @@ class _Badge extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// キャラクターが成長したときの帯
+class _LevelUp extends StatelessWidget {
+  const _LevelUp({
+    required this.level,
+    required this.name,
+    required this.liquidColor,
+  });
+
+  final int level;
+  final String name;
+  final Color liquidColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(8, 8, 16, 8),
+      decoration: BoxDecoration(
+        color: AppColors.primarySoft,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.primary, width: 1.5),
+      ),
+      child: Row(
+        children: [
+          Mascot(level: level, size: 64, liquidColor: liquidColor),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'シェイカーくんが成長した！',
+                  style: TextStyle(fontSize: 12, color: AppColors.muted),
+                ),
+                Text('Lv.$level $name', style: AppFonts.heading(20)),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

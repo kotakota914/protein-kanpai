@@ -4,6 +4,8 @@
 /// バックエンドの API とあわせて変更する。
 library;
 
+import 'growth.dart';
+
 /// 友達（フォロー相手）
 class Friend {
   const Friend({
@@ -29,12 +31,12 @@ class Friend {
       name.isEmpty ? '?' : String.fromCharCode(name.runes.first);
 
   Friend copyWith({bool? following}) => Friend(
-        id: id,
-        name: name,
-        following: following ?? this.following,
-        shakingNow: shakingNow,
-        shookToday: shookToday,
-      );
+    id: id,
+    name: name,
+    following: following ?? this.following,
+    shakingNow: shakingNow,
+    shookToday: shookToday,
+  );
 }
 
 /// 1日分の「振った」記録
@@ -89,6 +91,7 @@ class ShakeResult {
     required this.streak,
     required this.bonusPoints,
     this.cheerWith,
+    this.levelUpTo,
   });
 
   /// 今日はじめて振ったか（スタンプが押されたか）
@@ -102,4 +105,7 @@ class ShakeResult {
 
   /// 同時に振って乾杯が成立した友達の名前（いなければ null）
   final String? cheerWith;
+
+  /// この記録でキャラクターが成長したら、新しい段階（しなければ null）
+  final GrowthStage? levelUpTo;
 }

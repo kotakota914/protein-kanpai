@@ -67,7 +67,11 @@ class _LoginScreenState extends State<LoginScreen> {
               const Text(
                 'シェイカーを振ったら、今日の筋トレ完了。\n友達と同時に振って、乾杯しよう。',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 15, height: 1.7, color: AppColors.muted),
+                style: TextStyle(
+                  fontSize: 15,
+                  height: 1.7,
+                  color: AppColors.muted,
+                ),
               ),
               const Spacer(),
               const Wrap(
@@ -80,11 +84,19 @@ class _LoginScreenState extends State<LoginScreen> {
                     label: '振ってスタンプ',
                   ),
                   _FeatureChip(
-                    leading: Icon(AppIcons.cheer, size: 16, color: AppColors.primary),
+                    leading: Icon(
+                      AppIcons.cheer,
+                      size: 16,
+                      color: AppColors.primary,
+                    ),
                     label: '友達と乾杯',
                   ),
                   _FeatureChip(
-                    leading: Icon(AppIcons.flame, size: 16, color: AppColors.primary),
+                    leading: Icon(
+                      AppIcons.flame,
+                      size: 16,
+                      color: AppColors.primary,
+                    ),
                     label: '毎日つづく',
                   ),
                 ],
@@ -135,7 +147,10 @@ class _FeatureChip extends StatelessWidget {
         children: [
           leading,
           const SizedBox(width: 6),
-          Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+          ),
         ],
       ),
     );

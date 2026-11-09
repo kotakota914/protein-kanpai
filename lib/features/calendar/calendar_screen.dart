@@ -52,7 +52,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   _selected = null;
                 }),
               ),
-              Text('${month.year}年 ${month.month}月', style: AppFonts.heading(20)),
+              Text(
+                '${month.year}年 ${month.month}月',
+                style: AppFonts.heading(20),
+              ),
               _NavButton(
                 icon: Icons.chevron_right_rounded,
                 tooltip: '次の月',
@@ -67,19 +70,30 @@ class _CalendarScreenState extends State<CalendarScreen> {
           Row(
             children: [
               _Stat(
-                leading: const ShakerIcon(size: 18, liquidColor: AppColors.cocoa),
+                leading: const ShakerIcon(
+                  size: 18,
+                  liquidColor: AppColors.cocoa,
+                ),
                 label: '今月振った日',
                 value: '${monthLogs.length}日',
               ),
               const SizedBox(width: 10),
               _Stat(
-                leading: const Icon(AppIcons.cheer, size: 18, color: AppColors.primary),
+                leading: const Icon(
+                  AppIcons.cheer,
+                  size: 18,
+                  color: AppColors.primary,
+                ),
                 label: '乾杯',
                 value: '$cheers回',
               ),
               const SizedBox(width: 10),
               _Stat(
-                leading: const Icon(AppIcons.flame, size: 18, color: AppColors.primary),
+                leading: const Icon(
+                  AppIcons.flame,
+                  size: 18,
+                  color: AppColors.primary,
+                ),
                 label: '最長連続',
                 value: '$longest日',
               ),
@@ -210,7 +224,11 @@ class _MonthGrid extends StatelessWidget {
           : const IconBadge(
               size: 36,
               background: AppColors.primary,
-              child: ShakerIcon(size: 22, color: Colors.white, liquidColor: AppColors.milk),
+              child: ShakerIcon(
+                size: 22,
+                color: Colors.white,
+                liquidColor: AppColors.milk,
+              ),
             );
     } else {
       dot = Container(
@@ -221,8 +239,12 @@ class _MonthGrid extends StatelessWidget {
           shape: BoxShape.circle,
           color: isFuture
               ? Colors.transparent
-              : (isToday ? AppColors.surface : AppColors.line.withValues(alpha: 0.5)),
-          border: isToday ? Border.all(color: AppColors.primary, width: 2) : null,
+              : (isToday
+                    ? AppColors.surface
+                    : AppColors.line.withValues(alpha: 0.5)),
+          border: isToday
+              ? Border.all(color: AppColors.primary, width: 2)
+              : null,
         ),
         child: Text(
           '$dayNumber',
@@ -239,7 +261,8 @@ class _MonthGrid extends StatelessWidget {
 
     return Semantics(
       button: true,
-      label: '${month.month}月$dayNumber日'
+      label:
+          '${month.month}月$dayNumber日'
           '${log == null ? '' : (log.cheered ? ' 乾杯した日' : ' 振った日')}',
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
@@ -280,8 +303,8 @@ class _DayDetail extends StatelessWidget {
     final title = log == null
         ? 'この日は振っていません'
         : (log.cheered
-            ? '${log.cheerWith.join('さん・')}さんと乾杯しました'
-            : 'プロテインを振りました');
+              ? '${log.cheerWith.join('さん・')}さんと乾杯しました'
+              : 'プロテインを振りました');
     return AppCard(
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
       child: Row(
@@ -307,7 +330,13 @@ class _DayDetail extends StatelessWidget {
                   '${day.month}月${day.day}日（${weekdayLabels[day.weekday - 1]}）',
                   style: const TextStyle(fontSize: 12, color: AppColors.muted),
                 ),
-                Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
               ],
             ),
           ),
@@ -324,7 +353,11 @@ class _DayDetail extends StatelessWidget {
 }
 
 class _NavButton extends StatelessWidget {
-  const _NavButton({required this.icon, required this.tooltip, required this.onTap});
+  const _NavButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onTap,
+  });
 
   final IconData icon;
   final String tooltip;
@@ -345,7 +378,11 @@ class _NavButton extends StatelessWidget {
 }
 
 class _Stat extends StatelessWidget {
-  const _Stat({required this.leading, required this.label, required this.value});
+  const _Stat({
+    required this.leading,
+    required this.label,
+    required this.value,
+  });
 
   final Widget leading;
   final String label;
@@ -361,7 +398,10 @@ class _Stat extends StatelessWidget {
           children: [
             leading,
             const SizedBox(height: 4),
-            Text(label, style: const TextStyle(fontSize: 11, color: AppColors.muted)),
+            Text(
+              label,
+              style: const TextStyle(fontSize: 11, color: AppColors.muted),
+            ),
             Text(value, style: AppFonts.heading(20)),
           ],
         ),
@@ -387,7 +427,10 @@ class _Legend extends StatelessWidget {
           decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
         const SizedBox(width: 6),
-        Text(label, style: const TextStyle(fontSize: 11, color: AppColors.muted)),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 11, color: AppColors.muted),
+        ),
       ],
     );
   }

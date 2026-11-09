@@ -26,7 +26,9 @@ Future<Uint8List?> pickPhotoBytes() {
       if (files == null || files.length == 0) return finish(null);
       final file = files.item(0)!;
       if (file.size > maxSourceBytes) {
-        if (!completer.isCompleted) completer.completeError(PhotoTooLargeException());
+        if (!completer.isCompleted) {
+          completer.completeError(PhotoTooLargeException());
+        }
         return;
       }
       final reader = web.FileReader();
@@ -41,7 +43,9 @@ Future<Uint8List?> pickPhotoBytes() {
       reader.addEventListener(
         'error',
         ((web.Event _) {
-          if (!completer.isCompleted) completer.completeError(StateError('read failed'));
+          if (!completer.isCompleted) {
+            completer.completeError(StateError('read failed'));
+          }
         }).toJS,
       );
       reader.readAsArrayBuffer(file);

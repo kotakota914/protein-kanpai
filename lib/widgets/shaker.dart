@@ -43,7 +43,11 @@ class ShakerIcon extends StatelessWidget {
 }
 
 class _ShakerIconPainter extends CustomPainter {
-  _ShakerIconPainter({required this.color, required this.liquid, required this.fill});
+  _ShakerIconPainter({
+    required this.color,
+    required this.liquid,
+    required this.fill,
+  });
 
   final Color color;
   final Color liquid;
@@ -104,11 +108,15 @@ class ShakerBottle extends StatefulWidget {
     required this.mix,
     this.active = false,
     this.height = 120,
+    this.liquidColor = AppColors.cocoa,
   });
 
   final double mix;
   final bool active;
   final double height;
+
+  /// 混ざったときの色（好きなプロテインの味）
+  final Color liquidColor;
 
   @override
   State<ShakerBottle> createState() => _ShakerBottleState();
@@ -160,6 +168,7 @@ class _ShakerBottleState extends State<ShakerBottle>
                 mix: widget.mix.clamp(0, 1),
                 phase: t,
                 agitation: widget.active ? 1 : 0,
+                powder: widget.liquidColor,
               ),
             ),
           );
@@ -170,11 +179,19 @@ class _ShakerBottleState extends State<ShakerBottle>
 }
 
 class _BottlePainter extends CustomPainter {
-  _BottlePainter({required this.mix, required this.phase, required this.agitation});
+  _BottlePainter({
+    required this.mix,
+    required this.phase,
+    required this.agitation,
+    required this.powder,
+  });
 
   final double mix;
   final double phase;
   final double agitation;
+
+  /// 粉と、混ざったあとの色
+  final Color powder;
 
   static const _water = Color(0xFFE3EEF3);
 
@@ -192,7 +209,10 @@ class _BottlePainter extends CustomPainter {
       ..close();
 
     // 本体（半透明の白いボトル）
-    canvas.drawPath(body, Paint()..color = Colors.white.withValues(alpha: 0.94));
+    canvas.drawPath(
+      body,
+      Paint()..color = Colors.white.withValues(alpha: 0.94),
+    );
 
     // 中身
     canvas.save();
@@ -207,21 +227,26 @@ class _BottlePainter extends CustomPainter {
     waveTop
       ..lineTo(100, 140)
       ..close();
-    final liquid = Color.lerp(_water, AppColors.cocoa, mix)!;
+    final liquid = Color.lerp(_water, powder, mix)!;
     canvas.drawPath(waveTop, Paint()..color = liquid);
 
     // 底にたまった粉（混ざるほど薄くなる）
     final powderH = 26 * (1 - mix);
     if (powderH > 0.5) {
-      final powder = Path()..moveTo(0, 140);
+      final powderPath = Path()..moveTo(0, 140);
       for (var x = 0.0; x <= 100; x += 5) {
-        powder.lineTo(x, 137 - powderH + math.sin(x / 9) * 2.5);
+        powderPath.lineTo(x, 137 - powderH + math.sin(x / 9) * 2.5);
       }
-      powder
+      powderPath
         ..lineTo(100, 140)
         ..close();
-      canvas.drawPath(powder, Paint()..color = AppColors.cocoa);
-      final grain = Paint()..color = AppColors.cocoaDark.withValues(alpha: 0.5);
+      canvas.drawPath(powderPath, Paint()..color = powder);
+      final grain = Paint()
+        ..color = Color.lerp(
+          powder,
+          Colors.black,
+          0.35,
+        )!.withValues(alpha: 0.5);
       for (var i = 0; i < 14; i++) {
         canvas.drawCircle(
           Offset(30 + (i * 37) % 42, 137 - powderH * ((i * 0.37) % 0.9)),
@@ -284,8 +309,14 @@ class _BottlePainter extends CustomPainter {
 
     // えり・フタ・注ぎ口（濃い色）
     final cap = Paint()..color = AppColors.ink;
-    canvas.drawRRect(RRect.fromLTRBR(18, 20, 82, 36, const Radius.circular(6)), cap);
-    canvas.drawRRect(RRect.fromLTRBR(30, 6, 70, 22, const Radius.circular(6)), cap);
+    canvas.drawRRect(
+      RRect.fromLTRBR(18, 20, 82, 36, const Radius.circular(6)),
+      cap,
+    );
+    canvas.drawRRect(
+      RRect.fromLTRBR(30, 6, 70, 22, const Radius.circular(6)),
+      cap,
+    );
     canvas.drawRRect(
       RRect.fromLTRBR(42, 0, 58, 8, const Radius.circular(3)),
       Paint()..color = AppColors.inkSoft,
@@ -302,5 +333,8 @@ class _BottlePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_BottlePainter old) =>
-      old.mix != mix || old.phase != phase || old.agitation != agitation;
+      old.mix != mix ||
+      old.phase != phase ||
+      old.agitation != agitation ||
+      old.powder != powder;
 }

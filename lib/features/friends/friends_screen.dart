@@ -20,9 +20,8 @@ class _FriendsScreenState extends State<FriendsScreen> {
 
   void _invite() {
     // TODO(backend): 招待リンクを発行して共有する
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('招待リンクの共有は準備中です')),
-    );
+    ScaffoldMessenger.of(context)
+        .showSnackBar(const SnackBar(content: Text('招待リンクの共有は準備中です')));
   }
 
   @override
@@ -71,7 +70,10 @@ class _FriendsScreenState extends State<FriendsScreen> {
                     children: [
                       Text(
                         '友達を招待しよう',
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                       Text(
                         '招待リンクを送ると、乾杯できるようになります',
@@ -127,12 +129,19 @@ class _FriendsScreenState extends State<FriendsScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           child: Row(
             children: [
-              Avatar(initial: f.initial, color: Avatar.colorFor(f.name), size: 40),
+              Avatar(
+                initial: f.initial,
+                color: Avatar.colorFor(f.name),
+                size: 40,
+              ),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
                   f.name,
-                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
               f.following
@@ -141,7 +150,9 @@ class _FriendsScreenState extends State<FriendsScreen> {
                       child: const Text('フォロー中'),
                     )
                   : FilledButton(
-                      style: FilledButton.styleFrom(minimumSize: const Size(88, 40)),
+                      style: FilledButton.styleFrom(
+                        minimumSize: const Size(88, 40),
+                      ),
                       onPressed: () => repo.toggleFollow(f.id),
                       child: const Text('フォロー'),
                     ),
@@ -187,14 +198,18 @@ class _Segmented extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 9),
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: i == selected ? AppColors.surface : Colors.transparent,
+                      color: i == selected
+                          ? AppColors.surface
+                          : Colors.transparent,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
                       labels[i],
                       style: TextStyle(
                         fontSize: 13,
-                        fontWeight: i == selected ? FontWeight.w700 : FontWeight.w500,
+                        fontWeight: i == selected
+                            ? FontWeight.w700
+                            : FontWeight.w500,
                         color: i == selected ? AppColors.ink : AppColors.muted,
                       ),
                     ),
@@ -236,12 +251,19 @@ class _ShakingFriend extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 6),
-        Text(friend.name, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+        Text(
+          friend.name,
+          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+        ),
         const SizedBox(height: 2),
         if (live)
           const Pill(
             label: '振り中',
-            leading: ShakerIcon(size: 14, color: AppColors.ink, liquidColor: AppColors.cocoa),
+            leading: ShakerIcon(
+              size: 14,
+              color: AppColors.ink,
+              liquidColor: AppColors.cocoa,
+            ),
           )
         else
           Text(
@@ -263,16 +285,16 @@ class _FeedTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final badge = switch (item.kind) {
       FeedKind.cheer => const IconBadge(
-          icon: AppIcons.cheer,
-          size: 32,
-          background: AppColors.cheerSoft,
-          foreground: AppColors.ink,
-        ),
+        icon: AppIcons.cheer,
+        size: 32,
+        background: AppColors.cheerSoft,
+        foreground: AppColors.ink,
+      ),
       FeedKind.shake => const IconBadge(
-          size: 32,
-          background: AppColors.primarySoft,
-          child: ShakerIcon(size: 18, liquidColor: AppColors.cocoa),
-        ),
+        size: 32,
+        background: AppColors.primarySoft,
+        child: ShakerIcon(size: 18, liquidColor: AppColors.cocoa),
+      ),
       FeedKind.streak => const IconBadge(icon: AppIcons.flame, size: 32),
     };
     return AppCard(
@@ -289,7 +311,13 @@ class _FeedTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(item.text, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                Text(
+                  item.text,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
                 Text(
                   relativeTime(item.at, now),
                   style: const TextStyle(fontSize: 11, color: AppColors.muted),

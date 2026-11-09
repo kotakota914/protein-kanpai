@@ -2,7 +2,8 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'photo_picker_stub.dart'
-    if (dart.library.js_interop) 'photo_picker_web.dart' as impl;
+    if (dart.library.js_interop) 'photo_picker_web.dart'
+    as impl;
 
 /// 選べる写真の大きさの上限（縮小する前の元ファイル）
 const maxSourceBytes = 15 * 1024 * 1024;
@@ -21,7 +22,9 @@ Future<Uint8List> shrinkPhoto(Uint8List bytes, {int maxSide = 320}) async {
     buffer,
     getTargetSize: (width, height) {
       final longest = width > height ? width : height;
-      if (longest <= maxSide) return ui.TargetImageSize(width: width, height: height);
+      if (longest <= maxSide) {
+        return ui.TargetImageSize(width: width, height: height);
+      }
       final scale = maxSide / longest;
       return ui.TargetImageSize(
         width: (width * scale).round(),

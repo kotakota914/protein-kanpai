@@ -28,21 +28,35 @@ GoRouter buildRouter(AppRepository repository) {
       StatefulShellRoute.indexedStack(
         builder: (context, state, shell) => _TabScaffold(shell: shell),
         branches: [
-          StatefulShellBranch(routes: [
-            GoRoute(path: '/home', builder: (_, _) => const HomeScreen()),
-          ]),
-          StatefulShellBranch(routes: [
-            GoRoute(
-              path: '/calendar',
-              builder: (_, _) => const CalendarScreen(),
-            ),
-          ]),
-          StatefulShellBranch(routes: [
-            GoRoute(path: '/friends', builder: (_, _) => const FriendsScreen()),
-          ]),
-          StatefulShellBranch(routes: [
-            GoRoute(path: '/profile', builder: (_, _) => const ProfileScreen()),
-          ]),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(path: '/home', builder: (_, _) => const HomeScreen()),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/calendar',
+                builder: (_, _) => const CalendarScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/friends',
+                builder: (_, _) => const FriendsScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/profile',
+                builder: (_, _) => const ProfileScreen(),
+              ),
+            ],
+          ),
         ],
       ),
     ],
