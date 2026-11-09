@@ -1,24 +1,129 @@
-# プロテインで乾杯（フロントエンド）
+# プロテインで乾杯 🥤
 
-シェイカーを振ったら、今日の筋トレ完了。友達と同時に振れば乾杯になる、運動習慣を続けるための Web アプリです。
-DevFest GDGoC Japan Hackathon 2026 のチーム開発用リポジトリ（Flutter Web）です。
+[![Test and deploy](https://github.com/kotakota914/protein-kanpai/actions/workflows/deploy.yml/badge.svg)](https://github.com/kotakota914/protein-kanpai/actions/workflows/deploy.yml)
+
+**シェイカーを振ったら、今日の筋トレ完了。友達と同時に振れば「乾杯」になる。**
+
+運動を一人で続けられない人のための、スマホのブラウザで使える Web アプリです。
+DevFest GDGoC Japan Hackathon 2026 に向けて、Flutter Web で開発しています。
+
+<p>
+  <img src="docs/images/01-login.png" width="180" alt="ログイン画面">
+  <img src="docs/images/02-home.png" width="180" alt="ホーム画面">
+  <img src="docs/images/04-calendar.png" width="180" alt="カレンダー画面">
+  <img src="docs/images/05-friends.png" width="180" alt="友達画面">
+  <img src="docs/images/06-profile.png" width="180" alt="プロフィール画面">
+</p>
+
+---
+
+## 目次
+
+- [なぜ作ったか](#なぜ作ったか)
+- [できること](#できること)
+- [しくみ](#しくみ)
+- [技術構成と選んだ理由](#技術構成と選んだ理由)
+- [動かし方](#動かし方)
+- [公開（Firebase Hosting）](#公開firebase-hosting)
+- [フォルダ構成](#フォルダ構成)
+- [バックエンドとの接続](#バックエンドとの接続)
+- [ハッカソンへの提出](#ハッカソンへの提出)
+- [開発のルール](#開発のルール)
+- [使用している素材とライセンス](#使用している素材とライセンス)
+
+---
+
+## なぜ作ったか
+
+筋トレを始めても、一人だと続かない。記録アプリは入力が面倒で、「健康寿命」のような目標は遠すぎて実感がわかない。
+
+そこで、**プロテインを飲む前にシェイカーを振る**という毎日の行動を、そのまま記録にしました。入力はゼロ。友達と同じタイミングで振れば乾杯になり、一緒にがんばっていることが伝わります。
+
+| 課題 | このアプリの答え |
+|---|---|
+| 記録が面倒 | シェイカーを**振るだけ**で記録 |
+| 一人だと続かない | 友達と**同時に振ると乾杯**。「いま〇〇さんが振っています」で誘い合える |
+| 目標が遠い | 連続日数・スタンプ・キャラクターの成長で、**今日の 1 回**に意味を持たせる |
+| 振り返らない | Gemini が記録から「今週のふりかえり」を作る（予定） |
 
 ## できること
 
 | 画面 | 内容 |
 |---|---|
-| ログイン | Google でログイン（いまは仮のログイン） |
-| ホーム | 連続日数と今週のスタンプ、シェイカーを振って記録、いま振っている友達の表示 |
-| 振った結果 | スタンプ獲得・乾杯の成立・連続日数・ログインボーナス |
+| ログイン | Google でログイン |
+| ホーム | 連続日数と今週のスタンプ、シェイカーくん（キャラクター）、シェイカーを振って記録、いま振っている友達 |
+| 振った結果 | スタンプ・乾杯・連続日数・ログインボーナス・シェイカーくんの成長 |
 | カレンダー | 振った日と乾杯した日のスタンプ、月ごとの集計 |
-| 友達 | いま振っている友達、タイムライン、フォロー |
-| プロフィール | 写真からアイコンを選ぶ、記録、好きなプロテイン（Gemini で袋の写真から読み取り予定）、今週のふりかえり |
+| 友達 | いま振っている友達、タイムライン、フォロー、招待 |
+| プロフィール | 写真からアイコンを選ぶ、記録、好きなプロテイン（袋の写真から登録）、今週のふりかえり |
 
-**現在はすべて仮のデータ（モック）で動きます。** ページを読み込み直すと最初の状態に戻ります。
+### シェイカーくん（キャラクター）
+
+<img src="docs/images/03-mascot.png" width="600" alt="シェイカーくんの5段階と、味ごとのシェイクの色">
+
+- **振った日数（＝筋トレした日数）**で 5 段階に育ちます：ひよっこ → ちょいマッチョ（3日）→ 細マッチョ（7日）→ マッチョ（14日）→ ムキムキ（30日）
+- プロテインを飲んだ量ではなく日数で育てるので、1 日に何回振っても 1 日分。飲みすぎを促しません。
+- 好きなプロテインの**味でシェイクの色が変わります**（ココア・ストロベリー・抹茶・バニラなど）。
+
+### 実装の状況
+
+いまは**すべて仮のデータ（モック）で動きます**。ページを読み込み直すと最初の状態に戻ります。
+
+| 機能 | 状況 |
+|---|---|
+| 画面（7 画面）・画面の移動 | ✅ 実装済み |
+| 振る検知（加速度センサー、iPhone の許可対応） | ✅ 実装済み（実機での調整が必要） |
+| 写真からアイコンを選ぶ（端末で 320px に縮小） | ✅ 実装済み（保存はバックエンド待ち） |
+| シェイカーくんの成長・味ごとの色 | ✅ 実装済み |
+| ログイン・記録・乾杯の判定・フォロー | ⏳ バックエンドと接続予定 |
+| 袋の写真の読み取り・今週のふりかえり（Gemini） | ⏳ バックエンドと接続予定 |
+
+## しくみ
+
+### 振る検知
+
+```
+ボタンを押す ──▶ センサーの使用許可（iPhone のみ）──▶ 加速度を監視
+                                                         │
+          重力の 2.5 倍を超える揺れを 2 秒以内に 8 回 ◀──┘
+                                │
+                                ▼
+                     「振った」と判定して記録
+```
+
+- ブラウザの加速度センサー（`devicemotion`）を直接使っています（`lib/shake/`）。定番の `sensors_plus` は iPhone の Safari で値が届かない報告があるため使っていません。
+- iPhone ではボタンを押したときにセンサーの使用許可を求めます。**HTTPS で公開したページでないと動きません。**
+- 強さ・回数は `lib/shake/shake_detector_web.dart` の定数で調整します。
+- 振るボタンの中のシェイカーは、振るほど粉が混ざってプロテインの色になります。
+
+### 乾杯
+
+フォロー中の友達が**前後 5 秒以内に振ったら乾杯成立**。判定は端末ではなくサーバーの時刻で行います（予定。詳細は [`docs/api-contract.md`](docs/api-contract.md)）。
+
+## 技術構成と選んだ理由
+
+| 技術 | 用途 | 選んだ理由 |
+|---|---|---|
+| **Flutter（Web）** | 画面 | チームに経験者がいる。シェイカーやキャラクターのアニメーションを自由に描ける。Google 技術でそろえられる |
+| **Firebase Hosting** | 公開 | 加速度センサーは HTTPS が必須。静的ファイルを CDN と HTTPS 付きで配信できる |
+| **Firebase Authentication** | Google ログイン（予定） | パスワードを自前で持たずに済む |
+| **Cloud Run** | API（予定） | 乾杯の判定はサーバーの時刻で行う必要がある。使わないときは 0 台まで縮む |
+| **Vertex AI の Gemini** | 袋の写真の読み取り・ふりかえり（予定） | 写真から商品名・味・たんぱく質量を構造化して取り出せる |
+| **Cloud Storage** | アイコン写真（予定） | 友達の画面にも出す画像を安全に配れる |
+
+```mermaid
+flowchart LR
+    U["スマホのブラウザ<br/>Flutter Web"] -->|HTTPS| FH["Firebase Hosting"]
+    U -->|Google ログイン| AUTH["Firebase Authentication"]
+    U -->|"ID トークン付き API"| CR["Cloud Run"]
+    CR --> DB["データベース"]
+    CR --> GCS["Cloud Storage"]
+    CR --> GEM["Vertex AI Gemini"]
+```
 
 ## 動かし方
 
-Flutter（stable）が必要です。
+[Flutter](https://docs.flutter.dev/get-started/install)（stable）が必要です。
 
 ```bash
 flutter pub get
@@ -28,7 +133,7 @@ flutter pub get
 flutter run -d chrome --dart-define=DEV_TOOLS=true
 ```
 
-`DEV_TOOLS=true` を付けると、PC でも確認できるように「（開発用）振ったことにする」ボタンが出ます。**提出・デモ用のビルドには付けないでください。**
+`DEV_TOOLS=true` を付けると、PC でも確認できるように「（開発用）振ったことにする」ボタンが出ます。**提出・デモ用のビルドには付けないでください**（デモ動画の偽装とみなされないように）。
 
 テストと静的チェック:
 
@@ -40,33 +145,86 @@ flutter test
 flutter analyze
 ```
 
-公開用のビルド（日本語フォントとレンダラーを同梱し、外部に通信しない）:
+公開用のビルド（日本語フォントと描画エンジンを同梱し、外部に通信しない）:
 
 ```bash
 flutter build web --release --no-web-resources-cdn
 ```
 
-## 振る検知について
+## 公開（Firebase Hosting）
 
-- ブラウザの加速度センサー（`devicemotion`）を直接使っています（`lib/shake/`）。`sensors_plus` は iPhone の Safari で値が届かない報告があるため使っていません。
-- iPhone ではボタンを押したときにセンサーの使用許可を求めます。**HTTPS で公開したページでないと動きません**（Firebase Hosting など）。
-- 判定の強さと回数は `lib/shake/shake_detector_web.dart` の定数で調整します（実機で要調整）。
+`main` に push すると、GitHub Actions（`.github/workflows/deploy.yml`）が静的チェック・テスト・ビルドを行い、Firebase の設定がそろっていれば Firebase Hosting に公開します。
+
+**最初に一度だけ設定すること：**
+
+1. [Firebase コンソール](https://console.firebase.google.com)でプロジェクトを作る
+2. プロジェクトの設定 → サービスアカウント → 「新しい秘密鍵を生成」で JSON をダウンロード
+3. GitHub のリポジトリ → Settings → Secrets and variables → Actions
+   - **Secrets**：`FIREBASE_SERVICE_ACCOUNT` に JSON の中身をそのまま
+   - **Variables**：`FIREBASE_PROJECT_ID` にプロジェクト ID
+   - （任意）**Variables**：`DEV_TOOLS` に `true` で開発用ボタン付きで公開
+
+> ⚠️ 秘密鍵の JSON は**絶対にリポジトリに入れない**でください（公開リポジトリです）。
+
+## フォルダ構成
+
+```
+lib/
+├── main.dart                 アプリの入口
+├── app/                      テーマ（色・文字）と画面の移動
+├── data/                     データの形・成長段階・データの窓口（AppRepository）
+├── features/                 画面ごとのコード
+│   ├── login/  home/  calendar/  friends/  profile/
+├── shake/                    振る検知（Web はブラウザのセンサー）
+├── photo/                    写真の選択と縮小
+└── widgets/                  共通の部品（カード・シェイカー・シェイカーくん）
+test/                         自動テスト
+docs/                         API の約束・提出用の下書き・画像
+scripts/                      提出用リポジトリへのコピー
+```
 
 ## バックエンドとの接続
 
-画面が使うデータは `lib/data/app_repository.dart` にまとめてあります。いまは仮のデータで、バックエンドができたらこのクラスの中身だけを差し替えます。差し替える箇所には `TODO(backend)` と書いてあります。
+画面が使うデータは [`lib/data/app_repository.dart`](lib/data/app_repository.dart) にまとめてあります。いまは仮のデータで、バックエンドができたらこのクラスの中身だけを差し替えます。差し替える箇所には `TODO(backend)` と書いてあります。
 
-- ログイン（Firebase Authentication）
-- 振った記録・乾杯の判定・ログインボーナス（Cloud Run の API）
-- フォロー・招待リンク
-- アイコン写真の保存（Cloud Storage）
-- プロテインの袋の写真の読み取り・今週のふりかえり（Gemini）
+API の形（エンドポイント・返す JSON・エラー・安全性の確認項目）は [`docs/api-contract.md`](docs/api-contract.md) にまとめています。
+
+## ハッカソンへの提出
+
+| ファイル | 内容 |
+|---|---|
+| [`docs/product.md`](docs/product.md) | プロダクト説明の下書き（`【要記入】` を埋める） |
+| [`docs/copyright-sheet.md`](docs/copyright-sheet.md) | 著作物利用シートの下書き |
+| [`docs/demo-script.md`](docs/demo-script.md) | デモ動画の台本 |
+
+提出用リポジトリ（運営の `df-2026-t071`）へは、履歴ごとではなく最新のファイルだけをコピーします（過去のコミットに秘密情報があっても公開されないように）。
+
+```bash
+git clone https://github.com/Devfest-Hackathon-2026/df-2026-t071.git ../df-2026-t071
+```
+
+```bash
+scripts/export-to-submission.sh ../df-2026-t071
+```
+
+内容を確認してから、`../df-2026-t071` で `git push` します。締切：**2026-11-10（火）17:00**。
+
+## 開発のルール
+
+- `main` に push する前に `flutter analyze` と `flutter test` を通す（GitHub Actions でも確認されます）
+- API キー・サービスアカウントの鍵・`.env` はコミットしない
+- 画面の言葉は短く、具体的に。エラーは「何が起きたか・どうすればいいか」を書く
+- デモ動画は実機で本当に振って撮る（開発用ボタンは使わない）
 
 ## 使用している素材とライセンス
 
 | 素材 | ライセンス |
 |---|---|
-| Noto Sans JP（`assets/fonts/NotoSansJP-*.ttf`） | SIL Open Font License 1.1（`assets/fonts/OFL-NotoSansJP.txt`） |
-| Zen Maru Gothic（`assets/fonts/ZenMaruGothic-Black.ttf`） | SIL Open Font License 1.1（`assets/fonts/OFL-ZenMaruGothic.txt`） |
+| Noto Sans JP（`assets/fonts/NotoSansJP-*.ttf`） | SIL Open Font License 1.1（[`OFL-NotoSansJP.txt`](assets/fonts/OFL-NotoSansJP.txt)） |
+| Zen Maru Gothic（`assets/fonts/ZenMaruGothic-Black.ttf`） | SIL Open Font License 1.1（[`OFL-ZenMaruGothic.txt`](assets/fonts/OFL-ZenMaruGothic.txt)） |
 | Material Icons（Flutter 同梱） | Apache License 2.0 |
-| シェイカーのイラスト（`lib/widgets/shaker.dart`） | チームでコードで描画 |
+| Flutter・go_router・package:web | BSD 3-Clause |
+| cupertino_icons | MIT |
+| シェイカー・シェイカーくんのイラスト | チームがコードで描画（`lib/widgets/`） |
+
+詳しくは [`docs/copyright-sheet.md`](docs/copyright-sheet.md)。
