@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>stage</title>
+<style>
+  @font-face { font-family: Body; src: url('assets/assets/fonts/NotoSansJP-Regular.ttf'); font-weight: 400; }
+  @font-face { font-family: Body; src: url('assets/assets/fonts/NotoSansJP-Bold.ttf'); font-weight: 700; }
+  @font-face { font-family: Display; src: url('assets/assets/fonts/ZenMaruGothic-Black.ttf'); font-weight: 900; }
+  :root { --cream: #FFF8F1; --orange: #FF7A1A; --ink: #2B2118; --muted: #8D7A69; --soft: #FFECDD; }
+  html, body { margin: 0; width: 1280px; height: 720px; overflow: hidden; background: var(--cream); font-family: Body, sans-serif; color: var(--ink); }
+  .phone { position: absolute; left: 110px; top: 18px; width: 312px; height: 675px; border-radius: 34px; overflow: hidden;
+           box-shadow: 0 0 0 10px var(--ink), 0 24px 60px rgba(102, 64, 25, .25); background: #fff; }
+  .phone iframe { width: 390px; height: 844px; border: 0; transform: scale(.8); transform-origin: 0 0; }
+  .panel { position: absolute; left: 520px; top: 0; width: 680px; height: 720px; display: flex; flex-direction: column; justify-content: center; }
+  .brand { font-family: Display; font-weight: 900; color: var(--orange); font-size: 22px; margin-bottom: 28px; }
+  .chapter { display: inline-block; align-self: flex-start; background: var(--soft); color: var(--orange); font-weight: 700; font-size: 18px; padding: 6px 14px; border-radius: 999px; margin-bottom: 14px; }
+  .chapter:empty { display: none; }
+  .title { font-family: Display; font-weight: 900; font-size: 54px; line-height: 1.25; margin: 0 0 22px; }
+  .caption { font-size: 25px; line-height: 1.75; white-space: pre-line; }
+  .note { margin-top: 24px; font-size: 16px; color: var(--muted); }
+  .hero .title { font-size: 72px; }
+  .fade { animation: fade .45s ease both; }
+  @keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+</style>
+</head>
+<body>
+  <div class="phone"><iframe id="app" src="index.html"></iframe></div>
+  <div class="panel" id="panel">
+    <div class="brand">プロテインで乾杯</div>
+    <div class="chapter" id="chapter"></div>
+    <h1 class="title" id="title"></h1>
+    <div class="caption" id="caption"></div>
+    <div class="note" id="note"></div>
+  </div>
+<script>
+  window.showSegment = (seg) => {
+    const panel = document.getElementById('panel');
+    panel.classList.toggle('hero', !seg.chapter);
+    for (const k of ['chapter', 'title', 'caption', 'note']) {
+      document.getElementById(k).textContent = seg[k] || '';
+    }
+    panel.classList.remove('fade'); void panel.offsetWidth; panel.classList.add('fade');
+  };
+</script>
+</body>
+</html>

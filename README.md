@@ -7,6 +7,15 @@
 運動を一人で続けられない人のための、スマホのブラウザで使える Web アプリです。
 DevFest GDGoC Japan Hackathon 2026 に向けて、Flutter Web で開発しています。
 
+### 紹介動画（約 2 分・音声あり）
+
+[![紹介動画：使い方・工夫した点・機能（クリックで再生）](docs/images/video-thumb.png)](docs/video/intro.mp4)
+
+使い方・機能・工夫した点を約 2 分で紹介しています（画像をクリックすると再生ページが開きます）。
+
+- ナレーションは AI の音声合成（[Kokoro](https://huggingface.co/hexgrad/Kokoro-82M)、Apache License 2.0）で作成
+- 動画の中のアプリは**仮のデータ**で動いています。振る場面は、ブラウザで揺れのデータを送って再現しています（実機で振った映像ではありません）
+
 <p>
   <img src="docs/images/01-login.png" width="180" alt="ログイン画面">
   <img src="docs/images/02-home.png" width="180" alt="ホーム画面">
@@ -19,6 +28,7 @@ DevFest GDGoC Japan Hackathon 2026 に向けて、Flutter Web で開発してい
 
 ## 目次
 
+- [紹介動画](#紹介動画約-2-分音声あり)
 - [なぜ作ったか](#なぜ作ったか)
 - [できること](#できること)
 - [しくみ](#しくみ)
@@ -179,8 +189,8 @@ lib/
 ├── photo/                    写真の選択と縮小
 └── widgets/                  共通の部品（カード・シェイカー・シェイカーくん）
 test/                         自動テスト
-docs/                         API の約束・提出用の下書き・画像
-scripts/                      提出用リポジトリへのコピー
+docs/                         API の約束・提出用の下書き・画像・紹介動画
+scripts/                      提出用リポジトリへのコピー、紹介動画の作り方（scripts/video）
 ```
 
 ## バックエンドとの接続
@@ -226,5 +236,6 @@ scripts/export-to-submission.sh ../df-2026-t071
 | Flutter・go_router・package:web | BSD 3-Clause |
 | cupertino_icons | MIT |
 | シェイカー・シェイカーくんのイラスト | チームがコードで描画（`lib/widgets/`） |
+| 紹介動画のナレーション | [Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M)（音声 `jf_alpha`）で生成。Apache License 2.0 |
 
 詳しくは [`docs/copyright-sheet.md`](docs/copyright-sheet.md)。
