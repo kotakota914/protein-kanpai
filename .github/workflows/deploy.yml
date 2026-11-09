@@ -1,0 +1,39 @@
+name: Test and deploy
+
+# main に push するたびに、静的チェック・テスト・ビルドを行い、
+# Firebase の設定がそろっていれば Firebase Hosting に公開する。
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.47.9
+
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test
+
+      # DEV_TOOLS（開発用ボタン）はリポジトリ変数で切り替える。提出・デモ用は false のまま
+      - run: flutter build web --release --no-web-resources-cdn --dart-define=DEV_TOOLS=${{ vars.DEV_TOOLS == 'true' }}
+
+      # Firebase のプロジェクト ID（変数）と鍵（シークレット）がそろうまでは公開しない
+      - name: Deploy to Firebase Hosting
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && vars.FIREBASE_PROJECT_ID != ''
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          projectId: ${{ vars.FIREBASE_PROJECT_ID }}
+          channelId: live
