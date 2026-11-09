@@ -1,25 +1,17 @@
 import 'dart:js_interop';
 import 'dart:js_interop_unsafe';
-import 'dart:math' as math;
 
 import 'package:web/web.dart' as web;
 
+import 'shake_counter.dart';
 import 'shake_detector.dart';
 
-/// 振ったと判定する強さ（重力 約 9.8 の何倍か）。実機で調整する。
-const double _threshold = 25;
-
-/// この時間内に [ShakeDetector.requiredHits] 回強く揺れたら「振った」とする
-const Duration _window = Duration(seconds: 2);
-
-/// 1 回判定したあと、次の判定までの待ち時間
-const Duration _cooldown = Duration(seconds: 3);
-
-/// 1 回の強い揺れで何度も数えないための間隔
-const Duration _hitGap = Duration(milliseconds: 120);
-
+/// Web（スマホのブラウザ）用：加速度センサー（devicemotion）を直接使う。
+///
+/// `sensors_plus` は iPhone の Safari で値が届かない報告があるため、Web では使わない。
 class _WebShakeDetector implements ShakeDetector {
   JSFunction? _listener;
+  final _counter = ShakeCounter();
 
   @override
   bool get isSupported => globalContext.has('DeviceMotionEvent');
@@ -46,34 +38,19 @@ class _WebShakeDetector implements ShakeDetector {
     void Function(double progress)? onProgress,
   }) {
     stop();
-    var hits = 0;
-    var windowStart = DateTime.now();
-    var lastHit = DateTime.fromMillisecondsSinceEpoch(0);
-    var lastShake = DateTime.fromMillisecondsSinceEpoch(0);
+    _counter.reset();
 
     void handle(web.DeviceMotionEvent event) {
       final a = event.accelerationIncludingGravity;
       if (a == null) return;
-      final x = a.x ?? 0, y = a.y ?? 0, z = a.z ?? 0;
-      final g = math.sqrt(x * x + y * y + z * z);
-      final now = DateTime.now();
-
-      if (now.difference(lastShake) < _cooldown) return;
-      if (now.difference(windowStart) > _window) {
-        if (hits > 0) onProgress?.call(0);
-        hits = 0;
-        windowStart = now;
-      }
-      if (g > _threshold && now.difference(lastHit) > _hitGap) {
-        hits++;
-        lastHit = now;
-        onProgress?.call(hits / ShakeDetector.requiredHits);
-      }
-      if (hits >= ShakeDetector.requiredHits) {
-        hits = 0;
-        lastShake = now;
-        onShake();
-      }
+      _counter.add(
+        a.x ?? 0,
+        a.y ?? 0,
+        a.z ?? 0,
+        DateTime.now(),
+        onShake: onShake,
+        onProgress: onProgress,
+      );
     }
 
     _listener = handle.toJS;

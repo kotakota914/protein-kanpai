@@ -17,6 +17,8 @@
 | Flutter SDK | 画面全体 | BSD 3-Clause |
 | go_router | 画面の移動 | BSD 3-Clause |
 | web（package:web） | ブラウザの加速度センサー・写真選択 | BSD 3-Clause |
+| sensors_plus | iPhone アプリの加速度センサー | BSD 3-Clause |
+| image_picker | iPhone アプリの写真選択 | BSD 3-Clause |
 | cupertino_icons | アイコン | MIT |
 
 `flutter build web` で作られる `assets/NOTICES` に、同梱される全ライブラリのライセンスが出力される。

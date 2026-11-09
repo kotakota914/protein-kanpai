@@ -34,6 +34,7 @@ DevFest GDGoC Japan Hackathon 2026 に向けて、Flutter Web で開発してい
 - [しくみ](#しくみ)
 - [技術構成と選んだ理由](#技術構成と選んだ理由)
 - [動かし方](#動かし方)
+- [iPhone アプリとして動かす（Xcode）](#iphone-アプリとして動かすxcode)
 - [公開（Firebase Hosting）](#公開firebase-hosting)
 - [フォルダ構成](#フォルダ構成)
 - [バックエンドとの接続](#バックエンドとの接続)
@@ -101,9 +102,10 @@ DevFest GDGoC Japan Hackathon 2026 に向けて、Flutter Web で開発してい
                      「振った」と判定して記録
 ```
 
-- ブラウザの加速度センサー（`devicemotion`）を直接使っています（`lib/shake/`）。定番の `sensors_plus` は iPhone の Safari で値が届かない報告があるため使っていません。
+- Web 版はブラウザの加速度センサー（`devicemotion`）を直接使っています。定番の `sensors_plus` は iPhone の Safari で値が届かない報告があるため、Web では使っていません。iPhone アプリ版は `sensors_plus` を使います。
+- 判定の計算は Web とアプリで共通（`lib/shake/shake_counter.dart`）。数え時間は**最初の強い揺れから** 2 秒です（センサーは振っていない間も値を送ってくるため）。
 - iPhone ではボタンを押したときにセンサーの使用許可を求めます。**HTTPS で公開したページでないと動きません。**
-- 強さ・回数は `lib/shake/shake_detector_web.dart` の定数で調整します。
+- 強さ・回数は `lib/shake/shake_counter.dart` で調整します。
 - 振るボタンの中のシェイカーは、振るほど粉が混ざってプロテインの色になります。
 
 ### 乾杯
@@ -161,6 +163,18 @@ flutter analyze
 flutter build web --release --no-web-resources-cdn
 ```
 
+## iPhone アプリとして動かす（Xcode）
+
+実機で振る検知を試したいときは、iPhone アプリとして動かせます（無料の Apple ID でOK）。手順は [`docs/ios.md`](docs/ios.md)。
+
+```bash
+open ios/Runner.xcworkspace
+```
+
+```bash
+flutter run --release -d "あなたのiPhoneの名前"
+```
+
 ## 公開（Firebase Hosting）
 
 `main` に push すると、GitHub Actions（`.github/workflows/deploy.yml`）が静的チェック・テスト・ビルドを行い、Firebase の設定がそろっていれば Firebase Hosting に公開します。
@@ -185,9 +199,10 @@ lib/
 ├── data/                     データの形・成長段階・データの窓口（AppRepository）
 ├── features/                 画面ごとのコード
 │   ├── login/  home/  calendar/  friends/  profile/
-├── shake/                    振る検知（Web はブラウザのセンサー）
-├── photo/                    写真の選択と縮小
+├── shake/                    振る検知（判定の計算は共通、センサーは Web とアプリで別）
+├── photo/                    写真の選択と縮小（Web とアプリで別）
 └── widgets/                  共通の部品（カード・シェイカー・シェイカーくん）
+ios/                          iPhone アプリ用（Xcode で開く）
 test/                         自動テスト
 docs/                         API の約束・提出用の下書き・画像・紹介動画
 scripts/                      提出用リポジトリへのコピー、紹介動画の作り方（scripts/video）
@@ -233,7 +248,7 @@ scripts/export-to-submission.sh ../df-2026-t071
 | Noto Sans JP（`assets/fonts/NotoSansJP-*.ttf`） | SIL Open Font License 1.1（[`OFL-NotoSansJP.txt`](assets/fonts/OFL-NotoSansJP.txt)） |
 | Zen Maru Gothic（`assets/fonts/ZenMaruGothic-Black.ttf`） | SIL Open Font License 1.1（[`OFL-ZenMaruGothic.txt`](assets/fonts/OFL-ZenMaruGothic.txt)） |
 | Material Icons（Flutter 同梱） | Apache License 2.0 |
-| Flutter・go_router・package:web | BSD 3-Clause |
+| Flutter・go_router・package:web・sensors_plus・image_picker | BSD 3-Clause |
 | cupertino_icons | MIT |
 | シェイカー・シェイカーくんのイラスト | チームがコードで描画（`lib/widgets/`） |
 | 紹介動画のナレーション | [Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M)（音声 `jf_alpha`）で生成。Apache License 2.0 |

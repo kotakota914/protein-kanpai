@@ -1,7 +1,7 @@
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
-import 'photo_picker_stub.dart'
+import 'photo_picker_native.dart'
     if (dart.library.js_interop) 'photo_picker_web.dart'
     as impl;
 
