@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../app/theme.dart';
 import '../../data/models.dart';
+import '../../widgets/cheers.dart';
 import '../../widgets/common.dart';
 import '../../widgets/mascot.dart';
 import '../../widgets/shaker.dart';
@@ -63,20 +64,26 @@ class _ShakeResultSheet extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            TweenAnimationBuilder<double>(
-              tween: Tween(begin: 0.4, end: 1),
-              duration: const Duration(milliseconds: 600),
-              curve: Curves.elasticOut,
-              builder: (context, scale, child) =>
-                  Transform.scale(scale: scale, child: child),
-              child: cheer != null
-                  ? _CheersPair(
-                      me: myInitial,
-                      myPhoto: myPhoto,
-                      friend: cheer.substring(0, 1),
-                    )
-                  : ShakerBottle(mix: 1, height: 120, liquidColor: liquidColor),
-            ),
+            if (cheer != null)
+              CheersAnimation(
+                myInitial: myInitial,
+                myPhoto: myPhoto,
+                friendInitial: cheer.substring(0, 1),
+                myLiquid: liquidColor,
+              )
+            else
+              TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0.4, end: 1),
+                duration: const Duration(milliseconds: 600),
+                curve: Curves.elasticOut,
+                builder: (context, scale, child) =>
+                    Transform.scale(scale: scale, child: child),
+                child: ShakerBottle(
+                  mix: 1,
+                  height: 120,
+                  liquidColor: liquidColor,
+                ),
+              ),
             const SizedBox(height: 16),
             Text(title, style: AppFonts.heading(28)),
             const SizedBox(height: 8),
@@ -144,59 +151,6 @@ class _ShakeResultSheet extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-/// 自分と友達のアイコンの間にグラス
-class _CheersPair extends StatelessWidget {
-  const _CheersPair({
-    required this.me,
-    required this.myPhoto,
-    required this.friend,
-  });
-
-  final String me;
-  final Uint8List? myPhoto;
-  final String friend;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 196,
-      height: 88,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Positioned(
-            left: 0,
-            child: Avatar(
-              initial: me,
-              photo: myPhoto,
-              color: AppColors.primary,
-              size: 64,
-            ),
-          ),
-          Positioned(
-            right: 0,
-            child: Avatar(
-              initial: friend,
-              color: AppColors.cheerSoft,
-              size: 64,
-            ),
-          ),
-          Container(
-            width: 88,
-            height: 88,
-            decoration: BoxDecoration(
-              color: AppColors.cheer,
-              shape: BoxShape.circle,
-              border: Border.all(color: AppColors.surface, width: 4),
-            ),
-            child: const Icon(AppIcons.cheer, size: 40, color: AppColors.ink),
-          ),
-        ],
       ),
     );
   }
