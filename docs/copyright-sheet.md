@@ -40,7 +40,7 @@
 | 名前 | 出典 | ライセンス |
 |---|---|---|
 | ナレーション音声 | Kokoro-82M（https://huggingface.co/hexgrad/Kokoro-82M）、音声 `jf_alpha` で生成 | Apache License 2.0 |
-| 読み上げ用の日本語辞書 | UniDic（misaki・fugashi 経由で使用。動画の作成時のみ） | BSD 3-Clause など（UniDic のライセンス） |
+| 読み上げ用の日本語辞書 | UniDic（misaki・fugashi 経由で使用。動画の作成時のみ） | GPL・LGPL・BSD のいずれかを選べる（UniDic Consortium）。BSD を選択 |
 | アイコン用のイラスト | チームが作成（`scripts/video/avatar.png`。実在の人物ではない） | 本リポジトリのライセンスに従う |
 
 ## AI の利用
