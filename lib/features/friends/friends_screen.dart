@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../app/theme.dart';
 import '../../data/app_repository.dart';
@@ -17,11 +18,32 @@ class FriendsScreen extends StatefulWidget {
 
 class _FriendsScreenState extends State<FriendsScreen> {
   int _tab = 0; // 0: タイムライン, 1: フォロー
+  bool _inviting = false;
 
-  void _invite() {
-    // TODO(backend): 招待リンクを発行して共有する
-    ScaffoldMessenger.of(context)
-        .showSnackBar(const SnackBar(content: Text('招待リンクの共有は準備中です')));
+  /// 招待リンクを作って見せる。相手がリンクを開くと、お互いにフォローした状態になる
+  Future<void> _invite(AppRepository repo) async {
+    if (_inviting) return;
+    setState(() => _inviting = true);
+    try {
+      final url = await repo.createInviteLink();
+      if (!mounted) return;
+      await showDialog<void>(
+        context: context,
+        builder: (context) => _InviteLinkDialog(url: url),
+      );
+    } catch (error) {
+      if (mounted) showErrorSnackBar(context, error);
+    } finally {
+      if (mounted) setState(() => _inviting = false);
+    }
+  }
+
+  Future<void> _toggleFollow(AppRepository repo, String friendId) async {
+    try {
+      await repo.toggleFollow(friendId);
+    } catch (error) {
+      if (mounted) showErrorSnackBar(context, error);
+    }
   }
 
   @override
@@ -59,7 +81,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
           AppCard(
             color: AppColors.primarySoft,
             shadow: false,
-            onTap: _invite,
+            onTap: _inviting ? null : () => _invite(repo),
             child: const Row(
               children: [
                 Icon(Icons.link_rounded, color: AppColors.primary),
@@ -110,11 +132,19 @@ class _FriendsScreenState extends State<FriendsScreen> {
         Wrap(
           spacing: 18,
           runSpacing: 12,
-          children: [for (final f in following) _ShakingFriend(friend: f)],
+          children: [
+            for (final f in following)
+              _ShakingFriend(friend: f, photo: repo.avatarOf(f)),
+          ],
         ),
       const SizedBox(height: 20),
       const SectionLabel('タイムライン'),
       const SizedBox(height: 10),
+      if (repo.feed.isEmpty)
+        const Text(
+          'まだ出来事がありません。友達を招待して、一緒に振ろう',
+          style: TextStyle(fontSize: 13, color: AppColors.muted),
+        ),
       for (final item in repo.feed) ...[
         _FeedTile(item: item, now: now),
         const SizedBox(height: 10),
@@ -124,6 +154,11 @@ class _FriendsScreenState extends State<FriendsScreen> {
 
   List<Widget> _followList(AppRepository repo) {
     return [
+      if (repo.friends.isEmpty)
+        const Text(
+          'まだ友達がいません。下の「友達を招待しよう」からリンクを送ろう',
+          style: TextStyle(fontSize: 13, color: AppColors.muted),
+        ),
       for (final f in repo.friends) ...[
         AppCard(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -131,6 +166,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
             children: [
               Avatar(
                 initial: f.initial,
+                photo: repo.avatarOf(f),
                 color: Avatar.colorFor(f.name),
                 size: 40,
               ),
@@ -146,14 +182,14 @@ class _FriendsScreenState extends State<FriendsScreen> {
               ),
               f.following
                   ? OutlinedButton(
-                      onPressed: () => repo.toggleFollow(f.id),
+                      onPressed: () => _toggleFollow(repo, f.id),
                       child: const Text('フォロー中'),
                     )
                   : FilledButton(
                       style: FilledButton.styleFrom(
                         minimumSize: const Size(88, 40),
                       ),
-                      onPressed: () => repo.toggleFollow(f.id),
+                      onPressed: () => _toggleFollow(repo, f.id),
                       child: const Text('フォロー'),
                     ),
             ],
@@ -224,9 +260,10 @@ class _Segmented extends StatelessWidget {
 }
 
 class _ShakingFriend extends StatelessWidget {
-  const _ShakingFriend({required this.friend});
+  const _ShakingFriend({required this.friend, this.photo});
 
   final Friend friend;
+  final Uint8List? photo;
 
   @override
   Widget build(BuildContext context) {
@@ -246,6 +283,7 @@ class _ShakingFriend extends StatelessWidget {
           ),
           child: Avatar(
             initial: friend.initial,
+            photo: photo,
             color: Avatar.colorFor(friend.name),
             size: 54,
           ),
@@ -328,6 +366,53 @@ class _FeedTile extends StatelessWidget {
           badge,
         ],
       ),
+    );
+  }
+}
+
+/// 招待リンクを見せて、コピーしてもらう
+class _InviteLinkDialog extends StatelessWidget {
+  const _InviteLinkDialog({required this.url});
+
+  final String url;
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('招待リンクができました'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            '友達に送ってください。開いた人と、お互いにフォローした状態になります（7 日で期限切れ）。',
+            style: TextStyle(fontSize: 13, color: AppColors.muted, height: 1.5),
+          ),
+          const SizedBox(height: 12),
+          SelectableText(
+            url,
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('閉じる'),
+        ),
+        FilledButton.icon(
+          onPressed: () async {
+            await Clipboard.setData(ClipboardData(text: url));
+            if (!context.mounted) return;
+            Navigator.pop(context);
+            ScaffoldMessenger.of(context)
+              ..hideCurrentSnackBar()
+              ..showSnackBar(const SnackBar(content: Text('リンクをコピーしました')));
+          },
+          icon: const Icon(Icons.copy_rounded, size: 18),
+          label: const Text('コピー'),
+        ),
+      ],
     );
   }
 }

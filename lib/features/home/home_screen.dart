@@ -1,21 +1,16 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import '../../app/config.dart';
 import '../../app/theme.dart';
 import '../../data/app_repository.dart';
 import '../../data/app_scope.dart';
 import '../../data/growth.dart';
+import '../../data/models.dart';
 import '../../shake/shake_detector.dart';
 import '../../widgets/common.dart';
 import '../../widgets/mascot.dart';
 import '../../widgets/shaker.dart';
 import 'shake_result_sheet.dart';
-
-/// 開発用ボタンを出すか。
-///
-/// 開発中（debug）か、プレビュー用に `--dart-define=DEV_TOOLS=true` を付けて
-/// ビルドしたときだけ出す。提出・デモ用のビルドには付けない。
-const showDevTools = kDebugMode || bool.fromEnvironment('DEV_TOOLS');
 
 /// 01 / 02 ホーム：シェイカーを振る画面
 class HomeScreen extends StatefulWidget {
@@ -86,7 +81,16 @@ class _HomeScreenState extends State<HomeScreen>
       _state = _ShakeState.sending;
       _progress = 1;
     });
-    final result = await repo.recordShake();
+    final ShakeResult result;
+    try {
+      result = await repo.recordShake();
+    } catch (error) {
+      // 429（連打）や通信失敗。記録はされていないので、文言を出して振る前に戻す
+      if (!mounted) return;
+      setState(() => _state = _ShakeState.idle);
+      showErrorSnackBar(context, error);
+      return;
+    }
     if (!mounted) return;
     setState(() => _state = _ShakeState.idle);
     await showShakeResultSheet(
@@ -155,6 +159,7 @@ class _HomeScreenState extends State<HomeScreen>
                 children: [
                   Avatar(
                     initial: shaking.initial,
+                    photo: repo.avatarOf(shaking),
                     color: AppColors.primarySoft,
                     size: 40,
                   ),
@@ -186,7 +191,7 @@ class _HomeScreenState extends State<HomeScreen>
               ),
             ),
           ],
-          if (showDevTools) ...[
+          if (AppConfig.devTools) ...[
             const SizedBox(height: 20),
             // 開発用：PC では振れないので、振ったことにして画面を確認する。
             // 提出・デモ用のビルドには表示されない（デモ動画には使わない）。

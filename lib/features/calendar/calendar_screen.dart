@@ -23,6 +23,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
     final repo = AppScope.of(context);
     final today = repo.today;
     final month = _month ?? DateTime(today.year, today.month);
+    // 表示する月の記録がまだ無ければ取りに行く（届くと描き直される。2 回目以降は何もしない）
+    repo.ensureMonthLoaded(month);
     final logs = repo.logs;
 
     final daysInMonth = DateTime(month.year, month.month + 1, 0).day;

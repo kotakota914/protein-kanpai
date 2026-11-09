@@ -62,7 +62,7 @@
 ### `GET /avatars/{userId}`（実装で追加）
 
 `avatarUrl` の実体。**ログイン必須**で、本人か、`userId` とフォロー関係（どちら向きでも）がある人にだけ画像のバイト列を返す。関係がなければ 403、画像が無ければ 404。
-画面側は `Image.network` ではなく、ID トークン付きで取得してから表示する（Flutter Web の `Image.network` はヘッダーを付けられない）。
+画面側は `Image.network` ではなく、ID トークン付きで取得してから表示する（Flutter Web の `Image.network` はヘッダーを付けられない。`lib/data/api_repository.dart` の `avatarOf`）。トークンは API と同じ起点（scheme + host + port）の URL にだけ送る。
 
 ### `DELETE /me/avatar`
 
@@ -88,7 +88,7 @@
 ```
 
 - `points` 以下の 4 つは実装で追加。画面が成長段階とバッジの変化を 1 往復で出すため。
-- `levelUpTo`（シェイカーくんの段階が上がったか）と `newAchievements`（新しくもらえたバッジ）は**サーバーでは返さない**（省略可の取り決めに従う）。画面側は、振る前に持っていた自分の数字と、この応答の `totalDays`・`bestStreak`・`totalCheers` から計算する。段階は `lib/data/growth.dart`、バッジは `lib/data/achievements.dart` の判定をそのまま使えばよい。
+- `levelUpTo`（シェイカーくんの段階が上がったか）と `newAchievements`（新しくもらえたバッジ）は**サーバーでは返さない**（省略可の取り決めに従う）。画面側は、振る前に持っていた自分の数字と、この応答の `totalDays`・`bestStreak`・`totalCheers` から計算する（`lib/data/progress.dart`。段階は `lib/data/growth.dart`、バッジは `lib/data/achievements.dart` の判定をそのまま使う）。
 
 サーバーでやること：
 
@@ -145,7 +145,7 @@
 ### `POST /invites/{code}/accept`（実装で追加）
 
 招待リンクを開いた人が呼ぶ。招待した人と**相互フォロー**になり、`{ "friend": { "id": "u_123", "name": "こうたろう" } }` を返す。自分の招待は `400`、無い・期限切れは `404`。
-画面側は `/invite/{code}` を開いたらログイン後にこの API を呼ぶ流れが必要。
+画面側は `/invite/{code}` を開くと、ログイン後にこの API を呼ぶ（`lib/features/invite/invite_screen.dart`。未ログインなら `/login?next=/invite/{code}` を経由する）。
 
 ## Gemini を使うもの
 

@@ -56,7 +56,7 @@ DevFest GDGoC Japan Hackathon 2026 に向けて、Flutter Web で開発してい
 | 面倒くさい | シェイカーを**振るだけ**で記録 |
 | 一人だと続かない | 友達と**同時に振ると乾杯**。「いま〇〇さんが振っています」で誘い合える |
 | 続ける理由がない | 連続日数・スタンプ・キャラクターの成長で、**今日の 1 回**に意味を持たせる |
-| 振り返らない | Gemini が記録から「今週のふりかえり」を作る（予定） |
+| 振り返らない | Gemini が記録から「今週のふりかえり」を作る |
 
 ## できること
 
@@ -79,16 +79,19 @@ DevFest GDGoC Japan Hackathon 2026 に向けて、Flutter Web で開発してい
 
 ### 実装の状況
 
-いまは**すべて仮のデータ（モック）で動きます**。ページを読み込み直すと最初の状態に戻ります。
+画面とバックエンド API はつながっています。起動時に API の URL（`--dart-define=API_BASE_URL=…`）を渡すとバックエンドのデータで動き、渡さなければ**仮のデータ（モック）**で動きます（バックエンド無しのデモ用。ページを読み込み直すと最初の状態に戻ります）。
 
 | 機能 | 状況 |
 |---|---|
-| 画面（7 画面）・画面の移動 | ✅ 実装済み |
+| 画面（8 画面）・画面の移動 | ✅ 実装済み |
 | 振る検知（加速度センサー、iPhone の許可対応） | ✅ 実装済み（実機での調整が必要） |
-| 写真からアイコンを選ぶ（端末で 320px に縮小） | ✅ 実装済み（保存はバックエンド待ち） |
-| シェイカーくんの成長・味ごとの色 | ✅ 実装済み |
-| ログイン・記録・乾杯の判定・フォロー | ⏳ バックエンドと接続予定 |
-| 袋の写真の読み取り・今週のふりかえり（Gemini） | ⏳ バックエンドと接続予定 |
+| シェイカーくんの成長・味ごとの色・バッジ | ✅ 実装済み（成長とバッジは振る前後の数字から端末側で判定） |
+| 記録・乾杯の判定・カレンダー・フォロー・タイムライン | ✅ API 接続済み（ローカルの `backend/` で 2 ユーザーの乾杯まで確認） |
+| 友達の招待（リンクを作る → 開いた人と相互フォロー） | ✅ API 接続済み（`/invite/<code>` を開くとログイン後に受け取る） |
+| 写真からアイコンを選ぶ（端末で 320px に縮小） | ✅ API 接続済み（`PUT /me/avatar`。友達のアイコンは ID トークン付きで取得して表示） |
+| 袋の写真の読み取り・今週のふりかえり（Gemini） | ✅ API 接続済み（ローカルは Gemini の「代わり」で確認。本物の Vertex AI は未確認） |
+| ログイン（Firebase Authentication の Google ログイン） | ✅ 実装済み（**本物の Firebase プロジェクトでの確認はまだ**。ローカルは開発用ログインで確認） |
+| Cloud Run へのデプロイ・Firebase プロジェクトの作成 | ⏳ GCP のクレジットが届いてから（手順は `backend/README.md`） |
 
 ## しくみ
 
@@ -111,7 +114,7 @@ DevFest GDGoC Japan Hackathon 2026 に向けて、Flutter Web で開発してい
 
 ### 乾杯
 
-フォロー中の友達が**前後 5 秒以内に振ったら乾杯成立**。判定は端末ではなくサーバーの時刻で行います（予定。詳細は [`docs/api-contract.md`](docs/api-contract.md)）。
+フォロー中の友達が**前後 5 秒以内に振ったら乾杯成立**。判定は端末ではなくサーバーの時刻で行います（詳細は [`docs/api-contract.md`](docs/api-contract.md)）。先に振った側の画面にも乾杯を出すため、サーバーは最大 5 秒だけ相手の振りを待ってから応答します。
 
 ## 技術構成と選んだ理由
 
@@ -119,10 +122,10 @@ DevFest GDGoC Japan Hackathon 2026 に向けて、Flutter Web で開発してい
 |---|---|---|
 | **Flutter（Web）** | 画面 | チームに経験者がいる。シェイカーやキャラクターのアニメーションを自由に描ける。Google 技術でそろえられる |
 | **Firebase Hosting** | 公開 | 加速度センサーは HTTPS が必須。静的ファイルを CDN と HTTPS 付きで配信できる |
-| **Firebase Authentication** | Google ログイン（予定） | パスワードを自前で持たずに済む |
-| **Cloud Run** | API（予定） | 乾杯の判定はサーバーの時刻で行う必要がある。使わないときは 0 台まで縮む |
-| **Vertex AI の Gemini** | 袋の写真の読み取り・ふりかえり（予定） | 写真から商品名・味・たんぱく質量を構造化して取り出せる |
-| **Cloud Storage** | アイコン写真（予定） | 友達の画面にも出す画像を安全に配れる |
+| **Firebase Authentication** | Google ログイン（実装済み。プロジェクト作成待ち） | パスワードを自前で持たずに済む。ID トークンを API に付けて本人確認する |
+| **Cloud Run** | API（`backend/` に実装済み。デプロイ待ち） | 乾杯の判定はサーバーの時刻で行う必要がある。使わないときは 0 台まで縮む |
+| **Vertex AI の Gemini** | 袋の写真の読み取り・ふりかえり（実装済み。本番未確認） | 写真から商品名・味・たんぱく質量を構造化して取り出せる |
+| **Cloud Storage** | アイコン写真（実装済み。本番未確認） | 非公開バケットに置き、API がログイン済みの本人と友達にだけ返す |
 
 ![アーキテクチャ図（実線は実装済み、点線は予定）](docs/images/architecture.png)
 
@@ -138,7 +141,27 @@ flutter pub get
 flutter run -d chrome --dart-define=DEV_TOOLS=true
 ```
 
-`DEV_TOOLS=true` を付けると、PC でも確認できるように「（開発用）振ったことにする」ボタンが出ます。**提出・デモ用のビルドには付けないでください**（デモ動画の偽装とみなされないように）。
+`DEV_TOOLS=true` を付けると、PC でも確認できるように「（開発用）振ったことにする」ボタンと、Firebase なしの開発用ログインが出ます。**提出・デモ用のビルドには付けないでください**（デモ動画の偽装とみなされないように）。
+
+API の URL を渡さないので、上のコマンドでは仮のデータ（モック）で動きます。
+
+### バックエンドにつないで動かす（GCP なし）
+
+[uv](https://docs.astral.sh/uv/) が必要です。ターミナルを 2 つ使います。
+
+1 つ目（バックエンド。メモリ保存・開発用ログイン・Gemini の代わり、で動きます。`INVITE_BASE_URL` は招待リンクの先＝画面の URL）:
+
+```bash
+cd backend && uv sync && INVITE_BASE_URL=http://localhost:5555 uv run uvicorn app.main:app --port 8000
+```
+
+2 つ目（画面）:
+
+```bash
+flutter run -d chrome --web-port 5555 --dart-define=DEV_TOOLS=true --dart-define=API_BASE_URL=http://localhost:8000
+```
+
+ログイン画面の「（開発用）Firebase なしでログイン」で uid と名前を入れると、`Authorization: Bearer dev:<uid>:<名前>` でバックエンドに入れます。2 人で乾杯を試すには、別のウィンドウ（シークレットウィンドウでも可）で別の uid でログインし、片方の「友達」→「友達を招待しよう」で作ったリンクをもう片方で開いてから、5 秒以内に両方で振ります。
 
 テストと静的チェック:
 
@@ -174,12 +197,17 @@ flutter run --release -d "あなたのiPhoneの名前"
 
 **最初に一度だけ設定すること：**
 
-1. [Firebase コンソール](https://console.firebase.google.com)でプロジェクトを作る
+1. [Firebase コンソール](https://console.firebase.google.com)でプロジェクトを作る（バックエンドと同じ GCP プロジェクト）。Authentication → Sign-in method で **Google** を有効にする
 2. プロジェクトの設定 → サービスアカウント → 「新しい秘密鍵を生成」で JSON をダウンロード
-3. GitHub のリポジトリ → Settings → Secrets and variables → Actions
+3. プロジェクトの設定 → マイアプリ → **Web アプリ**を追加し、表示される `apiKey` / `appId` / `projectId` / `messagingSenderId` / `authDomain` を控える（公開ページに埋め込む識別子で、秘密ではありません）
+4. GitHub のリポジトリ → Settings → Secrets and variables → Actions
    - **Secrets**：`FIREBASE_SERVICE_ACCOUNT` に JSON の中身をそのまま
    - **Variables**：`FIREBASE_PROJECT_ID` にプロジェクト ID
+   - **Variables**：`FIREBASE_API_KEY`、`FIREBASE_APP_ID`、`FIREBASE_MESSAGING_SENDER_ID`、`FIREBASE_AUTH_DOMAIN`（手順 3 の値。無いと Google ログインが使えません）
+   - **Variables**：`API_BASE_URL` に `/api`（`firebase.json` の rewrite で Cloud Run に中継。バックエンドは `API_PREFIX=/api` と `PUBLIC_BASE_URL=https://<Hosting の URL>/api`、`INVITE_BASE_URL=https://<Hosting の URL>` で起動する）。空なら仮のデータで公開される
    - （任意）**Variables**：`DEV_TOOLS` に `true` で開発用ボタン付きで公開
+
+`firebase.json` の `/api/**` の rewrite は Cloud Run のサービス名 `protein-kanpai-api`・リージョン `asia-northeast1`（`backend/deploy.sh` の既定）に向けています。変えた場合はここも直してください。
 
 > ⚠️ 秘密鍵の JSON は**絶対にリポジトリに入れない**でください（公開リポジトリです）。
 
@@ -189,9 +217,9 @@ flutter run --release -d "あなたのiPhoneの名前"
 lib/
 ├── main.dart                 アプリの入口
 ├── app/                      テーマ（色・文字）と画面の移動
-├── data/                     データの形・成長段階・データの窓口（AppRepository）
+├── data/                     データの形・成長段階・データの窓口（AppRepository：仮データ版と API 版）・API クライアント・ログイン
 ├── features/                 画面ごとのコード
-│   ├── login/  home/  calendar/  friends/  profile/
+│   ├── login/  home/  calendar/  friends/  profile/  invite/
 ├── shake/                    振る検知（判定の計算は共通、センサーは Web とアプリで別）
 ├── photo/                    写真の選択と縮小（Web とアプリで別）
 └── widgets/                  共通の部品（カード・シェイカー・シェイカーくん）
@@ -204,7 +232,21 @@ scripts/                      提出用リポジトリへのコピー、紹介�
 
 ## バックエンドとの接続
 
-画面が使うデータは [`lib/data/app_repository.dart`](lib/data/app_repository.dart) にまとめてあります。いまは仮のデータで、バックエンドができたらこのクラスの中身だけを差し替えます。差し替える箇所には `TODO(backend)` と書いてあります。
+画面が使うデータの窓口は [`lib/data/app_repository.dart`](lib/data/app_repository.dart)（`AppRepository`）です。中身は 2 つあり、起動時の `--dart-define=API_BASE_URL` の有無で選びます（`lib/main.dart`）。
+
+| 中身 | ファイル | いつ使うか |
+|---|---|---|
+| `MockAppRepository` | `lib/data/mock_repository.dart` | `API_BASE_URL` 無し。仮のデータでデモする |
+| `ApiAppRepository` | `lib/data/api_repository.dart` | `API_BASE_URL` あり。バックエンド API を呼ぶ |
+
+つなぎ方の要点：
+
+- **ログイン**：`lib/data/auth.dart`。本番は Firebase Authentication の Google ログイン（Web はポップアップ、iPhone アプリは OS のブラウザ画面）。`DEV_TOOLS=true` のときだけ、Firebase なしの開発用ログイン（`dev:<uid>:<名前>`）が使えます。
+- **API 呼び出し**：`lib/data/api_client.dart` が毎回 `Authorization: Bearer <ID トークン>` を付けます。エラーは契約のエラー表の文言で画面に出し、401 ならログイン画面に戻します。
+- **数字はサーバーのものをそのまま使う**：ポイント・連続日数・合計日数・乾杯回数は `GET /me` と `POST /shakes` の値。シェイカーくんの成長と新しいバッジだけは、振る前後の数字から端末側で判定します（`lib/data/progress.dart`）。
+- **友達の様子**：ログイン中は数秒ごとに `GET /friends` を読み直し、「〇〇さんが振っています」を出します。
+- **招待**：「友達を招待しよう」で `POST /invites` のリンクを作り、開いた人は `/invite/<code>` → ログイン → `POST /invites/<code>/accept` でお互いにフォローした状態になります（`lib/features/invite/`）。
+- **アイコン画像**：`avatarUrl`（`GET /avatars/{userId}`）はログイン必須なので、`Image.network` ではなく ID トークン付きで取得してから表示します。
 
 API の形（エンドポイント・返す JSON・エラー・安全性の確認項目）は [`docs/api-contract.md`](docs/api-contract.md) にまとめています。
 
@@ -245,7 +287,7 @@ scripts/export-to-submission.sh ../df-2026-t071
 | Noto Sans JP（`assets/fonts/NotoSansJP-*.ttf`） | SIL Open Font License 1.1（[`OFL-NotoSansJP.txt`](assets/fonts/OFL-NotoSansJP.txt)） |
 | Zen Maru Gothic（`assets/fonts/ZenMaruGothic-Black.ttf`） | SIL Open Font License 1.1（[`OFL-ZenMaruGothic.txt`](assets/fonts/OFL-ZenMaruGothic.txt)） |
 | Material Icons（Flutter 同梱） | Apache License 2.0 |
-| Flutter・go_router・package:web・sensors_plus・image_picker | BSD 3-Clause |
+| Flutter・go_router・package:web・sensors_plus・image_picker・http・firebase_core・firebase_auth | BSD 3-Clause |
 | cupertino_icons | MIT |
 | シェイカー・シェイカーくんのイラスト | チームがコードで描画（`lib/widgets/`） |
 | 紹介動画のナレーション | [Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M)（音声 `jf_alpha`）で生成。Apache License 2.0 |

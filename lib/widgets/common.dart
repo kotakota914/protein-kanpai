@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 
 import '../app/theme.dart';
+import '../data/api_client.dart';
 
 /// 白いカード（角丸 20・うすい影）。Figma の各カードと同じ見た目。
 class AppCard extends StatelessWidget {
@@ -234,3 +235,11 @@ String relativeTime(DateTime at, DateTime now) {
 }
 
 const weekdayLabels = ['月', '火', '水', '木', '金', '土', '日'];
+
+/// 失敗したことを画面下の帯（SnackBar）で知らせる。
+/// 文言は API の約束（docs/api-contract.md のエラー表）に合わせる
+void showErrorSnackBar(BuildContext context, Object error) {
+  ScaffoldMessenger.of(context)
+    ..hideCurrentSnackBar()
+    ..showSnackBar(SnackBar(content: Text(messageForError(error))));
+}
