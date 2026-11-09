@@ -7,7 +7,9 @@
 #   （内容を確認してから）cd ../df-2026-t071 && git push
 #
 # - 履歴ごとではなく、最新のファイルだけをコピーする（過去のコミットに秘密情報が残っていても公開されない）
-# - アプリは提出用リポジトリの app/ に置く（運営の README・LICENSE はそのまま残す）
+# - アプリは提出用リポジトリの app/ に置く（運営の LICENSE などはそのまま残す）
+# - 提出用リポジトリの README.md の先頭に、アプリの案内（app/ へのリンク）を入れる。
+#   運営が書いた部分は消さない。2 回目以降は案内の部分だけを書き換える
 set -euo pipefail
 
 dest="${1:?提出用リポジトリを clone したフォルダを指定してください}"
@@ -40,8 +42,37 @@ mkdir -p "$dest/app"
 cp -R "$tmp"/. "$dest/app"/
 
 rev="$(git rev-parse --short HEAD)"
+
+# 提出用リポジトリの README.md の先頭に、審査員向けの案内を入れる
+python3 - "$dest/README.md" "$rev" <<'PY'
+import os, re, sys
+path, rev = sys.argv[1], sys.argv[2]
+start, end = "<!-- protein-kanpai:start -->", "<!-- protein-kanpai:end -->"
+block = f"""{start}
+# プロテインで乾杯
+
+シェイカーを振ったら、今日の筋トレ完了。友達と同時に振れば「乾杯」になる。運動を一人で続けられない人のためのアプリです。
+
+- **アプリのソースと詳しい説明**：[app/README.md](app/README.md)
+- **紹介動画**：[app/docs/video/intro.mp4](app/docs/video/intro.mp4)
+- **プロダクト説明**：[app/docs/product.md](app/docs/product.md)
+- **アーキテクチャ図**：[app/docs/images/architecture.png](app/docs/images/architecture.png)
+- **著作物利用シート**：[app/docs/copyright-sheet.md](app/docs/copyright-sheet.md)
+- 開発用リポジトリ：https://github.com/kotakota914/protein-kanpai （`{rev}` 時点の内容をコピー）
+
+![アプリの画面](app/docs/images/02-home.png)
+{end}
+"""
+old = open(path, encoding="utf-8").read() if os.path.exists(path) else ""
+if start in old and end in old:
+    new = re.sub(re.escape(start) + ".*?" + re.escape(end) + "\n?", lambda m: block, old, flags=re.S)
+else:
+    new = block + ("\n---\n\n" + old if old.strip() else "")
+open(path, "w", encoding="utf-8").write(new)
+PY
+
 cd "$dest"
-git add app
+git add app README.md
 if git diff --cached --quiet; then
   echo "変更はありません（すでに最新です）"
   exit 0

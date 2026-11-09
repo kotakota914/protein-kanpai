@@ -66,9 +66,15 @@
   "firstToday": true,
   "streak": 4,
   "bonusPoints": 10,
-  "cheerWith": { "id": "u_456", "name": "はなこ" }
+  "cheerWith": { "id": "u_456", "name": "はなこ" },
+  "levelUpTo": 2,
+  "newAchievements": ["first-cheer"]
 }
 ```
+
+- `levelUpTo`：この 1 回でシェイカーくんが次の段階に上がったら、その段階の番号（1〜5、`lib/data/growth.dart` の `level`）。上がらなければ `null`。段階は**振った日数**で決まる（1 日に何回振っても 1 日分）。
+- `newAchievements`：この 1 回で新しくもらえたバッジの ID（`lib/data/achievements.dart`）。なければ `[]`。
+- サーバーで計算するのが難しければ、フロントで計算する（いまの仮データと同じ）ので、`levelUpTo` と `newAchievements` は省略してもよい。
 
 サーバーでやること：
 
