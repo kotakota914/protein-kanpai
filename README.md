@@ -196,6 +196,7 @@ lib/
 ├── photo/                    写真の選択と縮小（Web とアプリで別）
 └── widgets/                  共通の部品（カード・シェイカー・シェイカーくん）
 ios/                          iPhone アプリ用（Xcode で開く）
+backend/                      バックエンド API（FastAPI / Cloud Run。app/ がコード、tests/ がテスト）
 test/                         自動テスト
 docs/                         API の約束・提出用の下書き・画像・紹介動画
 scripts/                      提出用リポジトリへのコピー、紹介動画の作り方（scripts/video）
@@ -206,6 +207,8 @@ scripts/                      提出用リポジトリへのコピー、紹介�
 画面が使うデータは [`lib/data/app_repository.dart`](lib/data/app_repository.dart) にまとめてあります。いまは仮のデータで、バックエンドができたらこのクラスの中身だけを差し替えます。差し替える箇所には `TODO(backend)` と書いてあります。
 
 API の形（エンドポイント・返す JSON・エラー・安全性の確認項目）は [`docs/api-contract.md`](docs/api-contract.md) にまとめています。
+
+バックエンド本体は [`backend/`](backend/)（Python 3.13 + FastAPI、Cloud Run）にあります。ローカルでの動かし方・テスト・Cloud Run へのデプロイ手順は [`backend/README.md`](backend/README.md)。
 
 ## ハッカソンへの提出
 
