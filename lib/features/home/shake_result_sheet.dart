@@ -121,6 +121,22 @@ class _ShakeResultSheet extends StatelessWidget {
                 liquidColor: liquidColor,
               ),
             ],
+            if (result.newAchievements.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                alignment: WrapAlignment.center,
+                children: [
+                  for (final name in result.newAchievements)
+                    Pill(
+                      label: 'バッジ獲得：$name',
+                      icon: Icons.military_tech_rounded,
+                      background: AppColors.cheer,
+                    ),
+                ],
+              ),
+            ],
             const SizedBox(height: 24),
             FilledButton(
               onPressed: () => Navigator.of(context).pop(),

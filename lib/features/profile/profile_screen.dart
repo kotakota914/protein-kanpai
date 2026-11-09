@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../app/theme.dart';
+import '../../data/achievements.dart';
 import '../../data/app_repository.dart';
 import '../../data/app_scope.dart';
 import '../../photo/photo_picker.dart';
@@ -186,6 +187,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ],
           ),
           const SizedBox(height: 12),
+          _AchievementBoard(earned: repo.earnedAchievementIds),
+          const SizedBox(height: 12),
           AppCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -352,6 +355,129 @@ class _Stat extends StatelessWidget {
               label,
               style: const TextStyle(fontSize: 11, color: AppColors.muted),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// バッジの一覧。取ったものは色付き、まだのものは灰色で取り方を出す
+class _AchievementBoard extends StatelessWidget {
+  const _AchievementBoard({required this.earned});
+
+  final Set<String> earned;
+
+  @override
+  Widget build(BuildContext context) {
+    final count = achievements.where((a) => earned.contains(a.id)).length;
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'バッジ',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+                ),
+              ),
+              Text(
+                '$count / ${achievements.length}',
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.primary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              const columns = 3;
+              const gap = 8.0;
+              final width =
+                  (constraints.maxWidth - gap * (columns - 1)) / columns;
+              return Wrap(
+                spacing: gap,
+                runSpacing: 12,
+                children: [
+                  for (final a in achievements)
+                    SizedBox(
+                      width: width,
+                      child: _AchievementTile(
+                        achievement: a,
+                        earned: earned.contains(a.id),
+                      ),
+                    ),
+                ],
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AchievementTile extends StatelessWidget {
+  const _AchievementTile({required this.achievement, required this.earned});
+
+  final Achievement achievement;
+  final bool earned;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label: earned
+          ? 'バッジ ${achievement.name} 獲得済み'
+          : 'バッジ ${achievement.name} 未獲得。${achievement.howTo}',
+      child: ExcludeSemantics(
+        child: Column(
+          children: [
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                IconBadge(
+                  icon: achievement.icon,
+                  size: 52,
+                  background: earned ? AppColors.cheer : AppColors.line,
+                  foreground: earned ? AppColors.ink : AppColors.muted,
+                ),
+                if (!earned)
+                  const Positioned(
+                    right: -2,
+                    bottom: -2,
+                    child: Icon(
+                      Icons.lock_rounded,
+                      size: 18,
+                      color: AppColors.muted,
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              achievement.name,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: earned ? AppColors.ink : AppColors.muted,
+              ),
+            ),
+            if (!earned)
+              Text(
+                achievement.howTo,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 10,
+                  color: AppColors.muted,
+                  height: 1.3,
+                ),
+              ),
           ],
         ),
       ),

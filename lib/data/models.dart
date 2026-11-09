@@ -92,6 +92,7 @@ class ShakeResult {
     required this.bonusPoints,
     this.cheerWith,
     this.levelUpTo,
+    this.newAchievements = const [],
   });
 
   /// 今日はじめて振ったか（スタンプが押されたか）
@@ -108,4 +109,7 @@ class ShakeResult {
 
   /// この記録でキャラクターが成長したら、新しい段階（しなければ null）
   final GrowthStage? levelUpTo;
+
+  /// この記録で新しく取ったバッジの名前
+  final List<String> newAchievements;
 }

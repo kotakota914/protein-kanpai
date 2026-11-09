@@ -121,6 +121,38 @@ void main() {
     });
   });
 
+  group('バッジ', () {
+    test('仮データでは 4 つ取っている', () {
+      expect(newRepo().earnedAchievementIds, {
+        'first-shake',
+        'streak-3',
+        'first-cheer',
+        'level-3',
+      });
+    });
+
+    test('7日連続になった日に「1週間つづいた」を取る', () async {
+      var now = fixedNow();
+      final repo = AppRepository(clock: () => now, random: Random(1));
+      // 仮データは昨日まで 3 日連続。今日から 4 日振ると 7 日連続になる
+      final got = <String>[];
+      for (var day = 0; day < 4; day++) {
+        got.addAll((await repo.recordShake()).newAchievements);
+        now = now.add(const Duration(days: 1));
+      }
+      expect(repo.bestStreak, 7);
+      expect(got, contains('1週間つづいた'));
+      expect(repo.earnedAchievementIds, contains('streak-7'));
+    });
+
+    test('好きなプロテインとアイコンを登録するとバッジが増える', () async {
+      final repo = newRepo();
+      await repo.scanProtein();
+      await repo.setAvatar(Uint8List.fromList([1, 2, 3]));
+      expect(repo.earnedAchievementIds, containsAll(['favorite', 'avatar']));
+    });
+  });
+
   group('画面', () {
     Future<AppRepository> pumpSignedIn(WidgetTester tester) async {
       tester.view.physicalSize = const Size(390 * 3, 844 * 3);
@@ -170,7 +202,8 @@ void main() {
 
       await tester.tap(find.text('プロフィール').last);
       await tester.pumpAndSettle();
-      expect(find.text('好きなプロテイン'), findsOneWidget);
+      expect(find.text('バッジ'), findsOneWidget);
+      expect(find.text('4 / 9'), findsOneWidget);
     });
   });
 }

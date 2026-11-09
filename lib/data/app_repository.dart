@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../app/theme.dart';
 
+import 'achievements.dart';
 import 'growth.dart';
 import 'models.dart';
 
@@ -105,6 +106,36 @@ class AppRepository extends ChangeNotifier {
   /// キャラクター（シェイカーくん）のいまの段階。振った日数の合計で決まる
   GrowthStage get stage => stageFor(totalDays);
 
+  /// これまでで一番長い連続日数
+  int get bestStreak {
+    final days = _logs.keys.toList()..sort();
+    var best = 0, current = 0;
+    DateTime? previous;
+    for (final d in days) {
+      current = (previous != null && d.difference(previous).inDays == 1)
+          ? current + 1
+          : 1;
+      if (current > best) best = current;
+      previous = d;
+    }
+    return best;
+  }
+
+  AchievementStats get _stats => AchievementStats(
+    totalDays: totalDays,
+    bestStreak: bestStreak,
+    totalCheers: totalCheers,
+    level: stage.level,
+    hasFavorite: _favorite != null,
+    hasAvatar: _avatar != null,
+  );
+
+  /// 取ったバッジの id
+  Set<String> get earnedAchievementIds => {
+    for (final a in achievements)
+      if (a.earned(_stats)) a.id,
+  };
+
   /// 今週（月曜はじまり）振った日数
   int get daysThisWeek {
     final monday = today.subtract(Duration(days: today.weekday - 1));
@@ -125,6 +156,7 @@ class AppRepository extends ChangeNotifier {
     await Future<void>.delayed(const Duration(milliseconds: 500));
     final firstToday = !shookToday;
     final stageBefore = stage;
+    final badgesBefore = earnedAchievementIds;
 
     // モック：いま振っている友達がいれば乾杯成立。いなければ半分の確率で成立
     final following = _friends.where((f) => f.following).toList();
@@ -168,6 +200,12 @@ class AppRepository extends ChangeNotifier {
       bonusPoints: bonus,
       cheerWith: cheer,
       levelUpTo: stageAfter.level > stageBefore.level ? stageAfter : null,
+      newAchievements: [
+        for (final a in achievements)
+          if (!badgesBefore.contains(a.id) &&
+              earnedAchievementIds.contains(a.id))
+            a.name,
+      ],
     );
   }
 
