@@ -47,6 +47,7 @@ DevFest GDGoC Japan Hackathon 2026 に向けて、Flutter Web で開発してい
 - [技術構成と選んだ理由](#技術構成と選んだ理由)
 - [動かし方](#動かし方)
 - [iPhone アプリとして動かす（Xcode）](#iphone-アプリとして動かすxcode)
+- [今日（11/10）までの変更のまとめ](#今日1110までの変更のまとめ)
 - [公開（Firebase Hosting）](#公開firebase-hosting)
 - [フォルダ構成](#フォルダ構成)
 - [バックエンドとの接続](#バックエンドとの接続)
@@ -203,6 +204,37 @@ open ios/Runner.xcworkspace
 ```bash
 flutter run --release -d "あなたのiPhoneの名前"
 ```
+
+**11/10 に実機（iPhone 13 mini）へ入れて起動できることを確認しました。** そのときに必要だったこと：
+
+| つまずいた所 | 対処 |
+|---|---|
+| `iOS 26.5 is not installed` と出てビルドできない | Xcode 本体とは別に、iPhone 用の部品が要る。`xcodebuild -downloadPlatform iOS`（約 8.5GB）か、Xcode の Settings → Components から入れる |
+| `Signing for "Runner" requires a development team` | Xcode で Runner → Signing & Capabilities → Team に自分の Apple ID のチームを選ぶ |
+| `The app identifier "com.t071.proteinApp" cannot be registered to your development team` | 識別名（Bundle Identifier）は開発チームごとに 1 つしか登録できない。同じ画面で、自分用の別の名前（例：`com.<自分の名前>.proteinKanpai`）に変える。**この変更は個人の設定なのでコミットしない** |
+| 初回のビルドが長い | Google ログイン用の部品（Firebase の iOS SDK、約 700MB）を初回だけ取得する。2 回目からは速い |
+| 起動すると「信頼されていないデベロッパ」 | iPhone の 設定 → 一般 → VPN とデバイス管理 → 自分の Apple ID → 信頼 |
+
+Mac で動かしたサーバー（`backend/`）につなぐときは、Mac の Wi-Fi のアドレスを渡してビルドします。iPhone と Mac を同じ Wi-Fi につなぎ、サーバーは `--host 0.0.0.0` で起動します。
+
+```bash
+flutter build ios --release --dart-define=DEV_TOOLS=true --dart-define=API_BASE_URL=http://<Mac のアドレス>:8000
+```
+
+iPhone アプリは通常 `http://` の相手と通信できませんが、同じ Wi-Fi の中の相手に限って許可しています（`ios/Runner/Info.plist` の `NSAllowsLocalNetworking`）。初回に「ローカルネットワーク上のデバイスの検索と接続」を聞かれたら許可します。この経路での**サーバーとの通信は、まだ確認できていません**（起動までは確認済み）。
+
+## 今日（11/10）までの変更のまとめ
+
+| 変更 | 内容 | 確認 |
+|---|---|---|
+| サーバーを実装（`backend/`） | `docs/api-contract.md` の API を Python + FastAPI で実装。保存は Firestore、画像は Cloud Storage、AI は Vertex AI の Gemini | 自動テスト 93 件、Firestore エミュレータ 15 件 |
+| 画面をサーバーにつなぐ | 仮データ版と API 版を起動時の設定で切り替え。Google ログイン、招待リンク、アイコン画像 | 自動テスト 41 件。ローカルで 2 人の乾杯まで |
+| 画面を公開 | Firebase Hosting に仮データ版を公開（https://protein-kanpai-t071.web.app ） | iPhone の Safari で実際に振って記録できた |
+| 資料を実態に合わせる | 状況を「公開版で確認済み／ローカルで確認済み／本番は未接続」の 3 段階で記載 | — |
+| 動画 | 実機デモ（30 秒）とプレゼン動画（1 分 24 秒）を追加 | 手元の映像と画面収録を並べただけで、センサーの値は書き換えていない |
+| iPhone アプリ | 同じ Wi-Fi 上のサーバーにつなげる設定を追加。実機に入れて起動 | サーバーとの通信は未確認 |
+
+**まだできていないこと**：サーバーの Cloud Run への公開、公開版とサーバーの接続、Gemini・Cloud Storage・本物の Google ログインの本番での確認。
 
 ## 公開（Firebase Hosting）
 
