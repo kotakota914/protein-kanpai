@@ -86,7 +86,7 @@ iPhone の「設定」→「一般」→「VPN とデバイス管理」→ 自�
 - **振る検知**：ホームの「タップして準備」を押して、iPhone をシェイカーのように振る。「○ / 8」が進み、8 回で記録されます
   - 判定の強さ・回数は `lib/shake/shake_counter.dart` の `threshold`（強さ）などで調整します。振っても進みにくい／弱く振っても反応する、などの感想を教えてください
 - **アイコン**：プロフィールで自分のアイコンを押す →「写真から選ぶ」→ 写真へのアクセスを許可
-- **データは仮のもの**です。アプリを終了すると最初の状態に戻ります
+- `API_BASE_URL` を付けずに動かしたときの**データは仮のもの**です。アプリを終了すると最初の状態に戻ります
 
 ## うまくいかないとき
 
@@ -99,6 +99,22 @@ iPhone の「設定」→「一般」→「VPN とデバイス管理」→ 自�
 | CocoaPods のエラー | `brew install cocoapods` のあと、`cd ios && pod install && cd ..` |
 | 7 日たったらアプリが開かなくなった | 無料の Apple ID で入れたアプリは 7 日で期限切れ。手順 5 をもう一度実行する |
 
+## バックエンドにつなぐ（Google ログイン）
+
+何も付けずに動かすと仮のデータで動きます。バックエンドにつなぐには、起動時に API の URL を渡します（iPhone アプリでは `/api` のような相対指定は使えないので、Cloud Run の URL をそのまま書く）:
+
+```bash
+flutter run --release -d "あなたのiPhoneの名前" --dart-define=API_BASE_URL=https://<Cloud Run の URL>
+```
+
+Google ログインには Firebase の iOS 用の設定が要ります（Firebase プロジェクトができてから。**まだ確認していません**）:
+
+1. Firebase コンソール → プロジェクトの設定 → マイアプリ → **iOS アプリ**を追加（Bundle Identifier は手順 3 で付けたもの）
+2. `GoogleService-Info.plist` をダウンロードし、Xcode で `Runner/Runner` の中に入れる（`.gitignore` 済み。リポジトリには入れない）
+3. `ios/Runner/Info.plist` の `CFBundleURLTypes` に、plist の `REVERSED_CLIENT_ID` を URL スキームとして追加する（Google のログイン画面からアプリに戻るため）
+
+ログインの実装は `lib/data/auth.dart`（iPhone アプリは `signInWithProvider` で OS のブラウザ画面を開く）。
+
 ## しくみ（開発者向け）
 
 | 機能 | Web 版 | iPhone アプリ |
@@ -107,3 +123,4 @@ iPhone の「設定」→「一般」→「VPN とデバイス管理」→ 自�
 | 判定の計算 | 共通：`lib/shake/shake_counter.dart`（テスト：`test/shake_counter_test.dart`） | 同左 |
 | 写真選び | ブラウザのファイル選択（`lib/photo/photo_picker_web.dart`） | `image_picker`（`lib/photo/photo_picker_native.dart`） |
 | 使う理由の表示 | なし | `ios/Runner/Info.plist`（写真・モーション） |
+| Google ログイン | Firebase のポップアップ（`signInWithPopup`） | OS のブラウザ画面（`signInWithProvider`）。`GoogleService-Info.plist` が要る |

@@ -1,28 +1,27 @@
-import 'dart:math';
-import 'dart:typed_data';
-
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../app/theme.dart';
-
 import 'achievements.dart';
 import 'growth.dart';
 import 'models.dart';
 
 /// 画面が使うデータの窓口。
 ///
-/// いまは仮のデータ（モック）で動く。バックエンドができたら、
-/// このクラスの中身だけを Firebase / Cloud Run の呼び出しに差し替える。
-/// 画面側のコードは変えなくてよいように、公開しているメソッドの形は保つ。
-class AppRepository extends ChangeNotifier {
-  AppRepository({DateTime Function()? clock, Random? random})
-    : _clock = clock ?? DateTime.now,
-      _random = random ?? Random() {
-    _seed();
-  }
+/// 画面（lib/features/、lib/widgets/）は、このクラスの公開メソッドだけを使う。
+/// 中身は 2 つあり、起動時の設定（`--dart-define=API_BASE_URL`）で選ぶ：
+///
+/// - `MockAppRepository`（mock_repository.dart）：仮のデータ。バックエンド無しのデモ用
+/// - `ApiAppRepository`（api_repository.dart）：バックエンド API（docs/api-contract.md）
+///
+/// 成長段階・バッジ・シェイクの色のように、数字から決まるものはここで計算する。
+abstract class AppRepository extends ChangeNotifier {
+  AppRepository({DateTime Function()? clock}) : _clock = clock ?? DateTime.now;
 
   final DateTime Function() _clock;
-  final Random _random;
+
+  @protected
+  DateTime get currentTime => _clock();
 
   DateTime get today {
     final now = _clock();
@@ -31,294 +30,130 @@ class AppRepository extends ChangeNotifier {
 
   // ---- ログイン -------------------------------------------------------
 
-  bool _signedIn = false;
-  bool get signedIn => _signedIn;
+  bool get signedIn;
 
-  String _userName = '';
-  String get userName => _userName;
-  String get userInitial => _userName.isEmpty ? '?' : _userName.substring(0, 1);
+  String get userName;
 
-  /// TODO(backend): Firebase Authentication の Google ログインに置き換える
-  Future<void> signIn() async {
-    await Future<void>.delayed(const Duration(milliseconds: 600));
-    _signedIn = true;
-    _userName = 'こうたろう';
-    notifyListeners();
-  }
+  String get userInitial =>
+      userName.isEmpty ? '?' : String.fromCharCode(userName.runes.first);
 
-  void signOut() {
-    _signedIn = false;
-    notifyListeners();
-  }
+  /// Google でログインする
+  Future<void> signIn();
+
+  /// Firebase なしの開発用ログインが使えるか（ローカルのバックエンドに対して試すとき）
+  bool get supportsDevSignIn => false;
+
+  Future<void> signInForDevelopment({
+    required String uid,
+    required String name,
+  }) => throw UnsupportedError('開発用ログインはこの構成では使えません');
+
+  Future<void> signOut();
 
   // ---- 自分のアイコン（写真） -------------------------------------------
 
   /// 写真のサイズの上限。端末側で縮小してから渡すので、通常はこれより小さい
   static const maxAvatarBytes = 2 * 1024 * 1024;
 
-  Uint8List? _avatar;
+  /// 自分で選んだアイコンの写真（未設定なら null。読み込み中も null）
+  Uint8List? get avatar;
 
-  /// 自分で選んだアイコンの写真（未設定なら null）
-  Uint8List? get avatar => _avatar;
+  /// アイコンを設定済みか（写真の読み込みがまだでも true）
+  bool get hasAvatar => avatar != null;
 
-  /// アイコンの写真を設定する。大きすぎる写真は [ArgumentError] を投げる。
-  ///
-  /// TODO(backend): Cloud Storage にアップロードし、URL をプロフィールに保存する。
-  /// 友達の画面にも表示されるので、サーバー側でも画像形式とサイズを確認する。
-  Future<void> setAvatar(Uint8List bytes) async {
-    if (bytes.isEmpty || bytes.length > maxAvatarBytes) {
-      throw ArgumentError('写真が大きすぎます');
-    }
-    _avatar = bytes;
-    notifyListeners();
-  }
+  /// アイコンの写真を設定する。大きすぎる写真は [ArgumentError] を投げる
+  Future<void> setAvatar(Uint8List bytes);
 
-  void clearAvatar() {
-    _avatar = null;
-    notifyListeners();
-  }
+  Future<void> clearAvatar();
+
+  /// 友達のアイコンの写真。未設定・読み込み中は null（読み込めたら通知する）
+  Uint8List? avatarOf(Friend friend) => null;
 
   // ---- 振った記録 -----------------------------------------------------
 
-  final Map<DateTime, ShakeLog> _logs = {};
-
   /// 日付ごとの記録（カレンダー用）
-  Map<DateTime, ShakeLog> get logs => Map.unmodifiable(_logs);
+  Map<DateTime, ShakeLog> get logs;
 
-  int _points = 120;
-  int get points => _points;
+  int get points;
 
-  bool get shookToday => _logs.containsKey(today);
+  bool get shookToday;
 
   /// 今日（まだなら昨日）までの連続日数
-  int get streak {
-    var day = shookToday ? today : today.subtract(const Duration(days: 1));
-    var count = 0;
-    while (_logs.containsKey(day)) {
-      count++;
-      day = day.subtract(const Duration(days: 1));
-    }
-    return count;
-  }
+  int get streak;
 
-  int get totalDays => _logs.length;
+  int get totalDays;
+
+  /// これまでで一番長い連続日数
+  int get bestStreak;
+
+  int get totalCheers;
+
+  /// 今週（月曜はじまり）振った日数
+  int get daysThisWeek;
 
   /// キャラクター（シェイカーくん）のいまの段階。振った日数の合計で決まる
   GrowthStage get stage => stageFor(totalDays);
 
-  /// これまでで一番長い連続日数
-  int get bestStreak {
-    final days = _logs.keys.toList()..sort();
-    var best = 0, current = 0;
-    DateTime? previous;
-    for (final d in days) {
-      current = (previous != null && d.difference(previous).inDays == 1)
-          ? current + 1
-          : 1;
-      if (current > best) best = current;
-      previous = d;
-    }
-    return best;
-  }
-
-  AchievementStats get _stats => AchievementStats(
+  /// バッジの判定に使う数字
+  AchievementStats get achievementStats => AchievementStats(
     totalDays: totalDays,
     bestStreak: bestStreak,
     totalCheers: totalCheers,
     level: stage.level,
-    hasFavorite: _favorite != null,
-    hasAvatar: _avatar != null,
+    hasFavorite: favoriteProtein != null,
+    hasAvatar: hasAvatar,
   );
 
   /// 取ったバッジの id
   Set<String> get earnedAchievementIds => {
     for (final a in achievements)
-      if (a.earned(_stats)) a.id,
+      if (a.earned(achievementStats)) a.id,
   };
 
-  /// 今週（月曜はじまり）振った日数
-  int get daysThisWeek {
-    final monday = today.subtract(Duration(days: today.weekday - 1));
-    return List.generate(
-      7,
-      (i) => monday.add(Duration(days: i)),
-    ).where(_logs.containsKey).length;
-  }
+  /// シェイカーを振ったことを記録する
+  Future<ShakeResult> recordShake();
 
-  int get totalCheers =>
-      _logs.values.fold(0, (sum, log) => sum + log.cheerWith.length);
-
-  /// シェイカーを振ったことを記録する。
-  ///
-  /// TODO(backend): Cloud Run の API を呼ぶ。乾杯の判定（フォロー中の友達が
-  /// 数秒以内に振ったか）とログインボーナスの計算はサーバー側で行う。
-  Future<ShakeResult> recordShake() async {
-    await Future<void>.delayed(const Duration(milliseconds: 500));
-    final firstToday = !shookToday;
-    final stageBefore = stage;
-    final badgesBefore = earnedAchievementIds;
-
-    // モック：いま振っている友達がいれば乾杯成立。いなければ半分の確率で成立
-    final following = _friends.where((f) => f.following).toList();
-    final shaking = following.where((f) => f.shakingNow).toList();
-    final String? cheer = shaking.isNotEmpty
-        ? shaking.first.name
-        : (following.isNotEmpty && _random.nextBool()
-              ? following[_random.nextInt(following.length)].name
-              : null);
-
-    final previous = _logs[today]?.cheerWith ?? const <String>[];
-    _logs[today] = ShakeLog(
-      date: today,
-      cheerWith: [
-        ...previous,
-        if (cheer != null && !previous.contains(cheer)) cheer,
-      ],
-    );
-
-    var bonus = 0;
-    if (firstToday) {
-      bonus = 10 + (streak % 7 == 0 ? 50 : 0); // 7日ごとに追加ボーナス
-      _points += bonus;
-    }
-    if (cheer != null) {
-      _feed.insert(
-        0,
-        FeedItem(
-          kind: FeedKind.cheer,
-          friendName: cheer,
-          text: '$cheerさんと乾杯しました',
-          at: _clock(),
-        ),
-      );
-    }
-    notifyListeners();
-    final stageAfter = stage;
-    return ShakeResult(
-      firstToday: firstToday,
-      streak: streak,
-      bonusPoints: bonus,
-      cheerWith: cheer,
-      levelUpTo: stageAfter.level > stageBefore.level ? stageAfter : null,
-      newAchievements: [
-        for (final a in achievements)
-          if (!badgesBefore.contains(a.id) &&
-              earnedAchievementIds.contains(a.id))
-            a.name,
-      ],
-    );
-  }
+  /// カレンダーで表示する月の記録を用意する（まだ無ければ取りに行き、届いたら通知する）
+  void ensureMonthLoaded(DateTime month) {}
 
   // ---- 友達 -----------------------------------------------------------
 
-  final List<Friend> _friends = [];
-  List<Friend> get friends => List.unmodifiable(_friends);
+  List<Friend> get friends;
+
   List<Friend> get following =>
-      _friends.where((f) => f.following).toList(growable: false);
+      friends.where((f) => f.following).toList(growable: false);
 
   /// いま振っているフォロー中の友達（ホームの「乾杯チャンス」用）
   Friend? get shakingFriend {
-    for (final f in _friends) {
+    for (final f in friends) {
       if (f.following && f.shakingNow) return f;
     }
     return null;
   }
 
-  final List<FeedItem> _feed = [];
-  List<FeedItem> get feed => List.unmodifiable(_feed);
+  List<FeedItem> get feed;
 
-  /// TODO(backend): フォロー API に置き換える
-  void toggleFollow(String friendId) {
-    final i = _friends.indexWhere((f) => f.id == friendId);
-    if (i < 0) return;
-    _friends[i] = _friends[i].copyWith(following: !_friends[i].following);
-    notifyListeners();
-  }
+  Future<void> toggleFollow(String friendId);
+
+  /// 招待リンクを作る。相手がこのリンクを開くと、お互いにフォローした状態になる
+  Future<String> createInviteLink();
+
+  /// 招待リンクを開いた側が呼ぶ。招待した人を返す
+  Future<Friend> acceptInvite(String code);
 
   // ---- 好きなプロテイン・ふりかえり -------------------------------------
 
-  Protein? _favorite;
-  Protein? get favoriteProtein => _favorite;
+  Protein? get favoriteProtein;
 
-  /// プロテインの袋の写真から、商品名などを読み取って登録する。
-  ///
-  /// TODO(backend): 写真を Cloud Run に送り、Gemini で読み取った結果を返す。
-  Future<Protein> scanProtein() async {
-    await Future<void>.delayed(const Duration(milliseconds: 1500));
-    // モック：読み取るたびに別の味を返し、シェイカーの色が変わる様子を確かめられるようにする
-    const samples = [
-      Protein(name: 'ホエイプロテイン', flavor: 'ココア味', proteinGrams: 20),
-      Protein(name: 'ホエイプロテイン', flavor: 'ストロベリー味', proteinGrams: 19),
-      Protein(name: 'ソイプロテイン', flavor: '抹茶味', proteinGrams: 18),
-      Protein(name: 'ホエイプロテイン', flavor: 'バニラ味', proteinGrams: 21),
-    ];
-    final result = samples[_scanCount++ % samples.length];
-    _favorite = result;
-    notifyListeners();
-    return result;
-  }
+  /// プロテインの袋の写真から、商品名・味・たんぱく質量を読み取る（保存はしない）
+  Future<Protein> scanProtein(Uint8List photo);
 
-  int _scanCount = 0;
+  /// 読み取った内容を確認したあと、好きなプロテインとして保存する
+  Future<void> saveFavoriteProtein(Protein protein);
 
   /// シェイクの色（好きなプロテインの味。未登録ならココア）
-  Color get liquidColor => AppColors.flavor(_favorite?.flavor);
+  Color get liquidColor => AppColors.flavor(favoriteProtein?.flavor);
 
-  /// 今週のふりかえり文。
-  ///
-  /// TODO(backend): 記録をもとに Gemini が作った文章を返す。
-  String get weeklySummary {
-    final days = daysThisWeek;
-    final left = max(0, 5 - days);
-    return left == 0
-        ? '今週は $days日 振れました。目標の 5日 を達成。この調子で続けよう。'
-        : '今週は $days日 振れました。あと $left日 で目標の 5日 に届きます。';
-  }
-
-  // ---- 仮データ -------------------------------------------------------
-
-  void _seed() {
-    _friends.addAll(const [
-      Friend(id: 'u1', name: 'たろう', following: true),
-      Friend(
-        id: 'u2',
-        name: 'はなこ',
-        following: true,
-        shakingNow: true,
-        shookToday: true,
-      ),
-      Friend(id: 'u3', name: 'けんた'),
-      Friend(id: 'u4', name: 'みさき'),
-    ]);
-
-    // 昨日までの 3 日連続 ＋ とびとびの記録
-    for (final daysAgo in [1, 2, 3, 5, 8, 9, 12]) {
-      final day = today.subtract(Duration(days: daysAgo));
-      _logs[day] = ShakeLog(
-        date: day,
-        cheerWith: daysAgo == 2 ? const ['たろう'] : const [],
-      );
-    }
-
-    final now = _clock();
-    _feed.addAll([
-      FeedItem(
-        kind: FeedKind.shake,
-        friendName: 'はなこ',
-        text: 'はなこさんが今日のプロテインを振りました',
-        at: now.subtract(const Duration(minutes: 40)),
-      ),
-      FeedItem(
-        kind: FeedKind.cheer,
-        friendName: 'たろう',
-        text: 'たろうさんと乾杯しました',
-        at: now.subtract(const Duration(days: 2)),
-      ),
-      FeedItem(
-        kind: FeedKind.streak,
-        friendName: 'たろう',
-        text: 'たろうさんが 7日連続を達成！',
-        at: now.subtract(const Duration(days: 3)),
-      ),
-    ]);
-  }
+  /// 今週のふりかえり文（Gemini が作る。届くまでは準備中の文）
+  String get weeklySummary;
 }

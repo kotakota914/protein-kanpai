@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 
 import '../../app/theme.dart';
 import '../../data/achievements.dart';
+import '../../data/api_client.dart';
 import '../../data/app_repository.dart';
 import '../../data/app_scope.dart';
+import '../../data/models.dart';
 import '../../photo/photo_picker.dart';
 import '../../widgets/common.dart';
 import '../../widgets/shaker.dart';
@@ -53,7 +55,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Navigator.pop(sheetContext);
               },
             ),
-            if (repo.avatar != null)
+            if (repo.hasAvatar)
               ListTile(
                 leading: const Icon(
                   Icons.delete_outline,
@@ -62,8 +64,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 title: const Text('写真を外す'),
                 onTap: () {
                   Navigator.pop(sheetContext);
-                  repo.clearAvatar();
-                  _toast('アイコンの写真を外しました');
+                  _clearAvatar(repo);
                 },
               ),
             const SizedBox(height: 8),
@@ -71,6 +72,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _clearAvatar(AppRepository repo) async {
+    try {
+      await repo.clearAvatar();
+      if (mounted) _toast('アイコンの写真を外しました');
+    } catch (error) {
+      if (mounted) showErrorSnackBar(context, error);
+    }
   }
 
   Future<void> _pickAvatar(AppRepository repo) async {
@@ -92,20 +102,52 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (mounted) _toast('アイコンを変更しました');
     } on ArgumentError {
       if (mounted) _toast('写真が大きすぎます。別の写真を選んでください');
+    } on ApiException catch (error) {
+      if (mounted) showErrorSnackBar(context, error);
     } catch (_) {
       if (mounted) _toast('この写真は読み込めません。JPEG か PNG の写真を選んでください');
     }
   }
 
-  /// TODO(frontend): 袋の写真を撮り、バックエンド（Gemini）へ送る
+  /// 袋の写真を選び、Gemini に読み取ってもらい、確認してから保存する。
+  ///
+  /// 読み取った結果はサーバーに保存されないので（契約の POST /protein/scan）、
+  /// 中身を見せて「登録する」と言われてから PUT /me/favorite-protein で保存する。
   Future<void> _scan(AppRepository repo) async {
-    setState(() => _scanning = true);
+    final Uint8List? photo;
     try {
-      await repo.scanProtein();
+      photo = await pickPhotoBytes(); // await より先にファイル選択を開く
+    } on PhotoTooLargeException {
+      _toast('写真が大きすぎます（15MB まで）。別の写真を選んでください');
+      return;
     } catch (_) {
-      if (mounted) _toast('読み取れませんでした。もう一度撮ってください');
+      _toast('写真を開けませんでした。別の写真を選んでください');
+      return;
+    }
+    if (photo == null || !mounted) return; // 選ぶのをやめた
+
+    setState(() => _scanning = true);
+    final Protein protein;
+    try {
+      protein = await repo.scanProtein(photo);
+    } catch (error) {
+      if (mounted) showErrorSnackBar(context, error);
+      return;
     } finally {
       if (mounted) setState(() => _scanning = false);
+    }
+    if (!mounted) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => _ScanResultDialog(protein: protein),
+    );
+    if (confirmed != true || !mounted) return;
+    try {
+      await repo.saveFavoriteProtein(protein);
+      if (mounted) _toast('好きなプロテインを登録しました');
+    } catch (error) {
+      if (mounted) showErrorSnackBar(context, error);
     }
   }
 
@@ -481,6 +523,50 @@ class _AchievementTile extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Gemini が読み取った内容を見せて、登録するかを聞く
+class _ScanResultDialog extends StatelessWidget {
+  const _ScanResultDialog({required this.protein});
+
+  final Protein protein;
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('この内容で登録しますか？'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '${protein.name} ${protein.flavor}',
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '1食あたり たんぱく質 ${protein.proteinGrams}g',
+            style: const TextStyle(fontSize: 13, color: AppColors.muted),
+          ),
+          const SizedBox(height: 10),
+          const Text(
+            'Gemini が袋の写真から読み取りました。違っていたら撮り直してください。',
+            style: TextStyle(fontSize: 12, color: AppColors.muted, height: 1.5),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: const Text('撮り直す'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(context, true),
+          child: const Text('登録する'),
+        ),
+      ],
     );
   }
 }

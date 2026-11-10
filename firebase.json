@@ -2,7 +2,13 @@
   "hosting": {
     "public": "build/web",
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
-    "rewrites": [{ "source": "**", "destination": "/index.html" }],
+    "rewrites": [
+      {
+        "source": "/api/**",
+        "run": { "serviceId": "protein-kanpai-api", "region": "asia-northeast1" }
+      },
+      { "source": "**", "destination": "/index.html" }
+    ],
     "headers": [
       {
         "source": "**/*.@(js|wasm|ttf|otf)",

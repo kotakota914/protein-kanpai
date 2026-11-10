@@ -7,6 +7,18 @@
 運動を一人で続けられない人のための、スマホのブラウザで使える Web アプリです。
 DevFest GDGoC Japan Hackathon 2026 に向けて、Flutter Web で開発しています。
 
+**▶ 公開版：https://protein-kanpai-t071.web.app** （スマホのブラウザで開いてください。iPhone は Safari）
+
+公開版は**仮のデータ**で動きます。シェイカーを振る検知は本物で、iPhone の実機で振って記録できることを確認しています。記録・乾杯の相手・友達は見本で、ページを読み込み直すと最初の状態に戻ります。サーバー（[`backend/`](backend/)）は実装とローカルでの接続確認まで済んでいて、公開版にはまだつないでいません（[実装の状況](#実装の状況)）。
+
+### プレゼン動画（1 分 24 秒）と実機デモ（30 秒）
+
+**[▶ プレゼン動画（docs/video/presentation.mp4）](docs/video/presentation.mp4)** — 課題・解決のしかた・実機デモ・しくみ・現状。提出したプレゼン動画と同じものです。
+
+**[▶ 実機で振っているデモだけ（docs/video/demo.mp4）](docs/video/demo.mp4)**
+
+公開版を iPhone の Safari で開き、**実際に振って**記録するところを撮りました。左が手元の映像、右が同じ時間の画面収録です（2 本を並べただけで、センサーの値は書き換えていません）。振る検知は本物です。記録・乾杯の相手（はなこさん）・友達は仮のデータです。
+
 ### 紹介動画（約 2 分・音声あり）
 
 [![紹介動画：使い方・工夫した点・機能（クリックで再生）](docs/images/video-thumb.png)](docs/video/intro.mp4)
@@ -35,6 +47,7 @@ DevFest GDGoC Japan Hackathon 2026 に向けて、Flutter Web で開発してい
 - [技術構成と選んだ理由](#技術構成と選んだ理由)
 - [動かし方](#動かし方)
 - [iPhone アプリとして動かす（Xcode）](#iphone-アプリとして動かすxcode)
+- [今日（11/10）までの変更のまとめ](#今日1110までの変更のまとめ)
 - [公開（Firebase Hosting）](#公開firebase-hosting)
 - [フォルダ構成](#フォルダ構成)
 - [バックエンドとの接続](#バックエンドとの接続)
@@ -56,7 +69,7 @@ DevFest GDGoC Japan Hackathon 2026 に向けて、Flutter Web で開発してい
 | 面倒くさい | シェイカーを**振るだけ**で記録 |
 | 一人だと続かない | 友達と**同時に振ると乾杯**。「いま〇〇さんが振っています」で誘い合える |
 | 続ける理由がない | 連続日数・スタンプ・キャラクターの成長で、**今日の 1 回**に意味を持たせる |
-| 振り返らない | Gemini が記録から「今週のふりかえり」を作る（予定） |
+| 振り返らない | Gemini が記録から「今週のふりかえり」を作る |
 
 ## できること
 
@@ -79,16 +92,20 @@ DevFest GDGoC Japan Hackathon 2026 に向けて、Flutter Web で開発してい
 
 ### 実装の状況
 
-いまは**すべて仮のデータ（モック）で動きます**。ページを読み込み直すと最初の状態に戻ります。
+画面とバックエンド API はつながっています。起動時に API の URL（`--dart-define=API_BASE_URL=…`）を渡すとバックエンドのデータで動き、渡さなければ**仮のデータ（モック）**で動きます（バックエンド無しのデモ用。ページを読み込み直すと最初の状態に戻ります）。
 
 | 機能 | 状況 |
 |---|---|
-| 画面（7 画面）・画面の移動 | ✅ 実装済み |
-| 振る検知（加速度センサー、iPhone の許可対応） | ✅ 実装済み（実機での調整が必要） |
-| 写真からアイコンを選ぶ（端末で 320px に縮小） | ✅ 実装済み（保存はバックエンド待ち） |
-| シェイカーくんの成長・味ごとの色 | ✅ 実装済み |
-| ログイン・記録・乾杯の判定・フォロー | ⏳ バックエンドと接続予定 |
-| 袋の写真の読み取り・今週のふりかえり（Gemini） | ⏳ バックエンドと接続予定 |
+| 画面（8 画面）・画面の移動 | ✅ 実装済み |
+| 振る検知（加速度センサー、iPhone の許可対応） | ✅ 実装済み（公開版を iPhone の Safari で開き、実際に振って記録できることを確認） |
+| シェイカーくんの成長・味ごとの色・バッジ | ✅ 実装済み（成長とバッジは振る前後の数字から端末側で判定） |
+| 記録・乾杯の判定・カレンダー・フォロー・タイムライン | ✅ API 接続済み（ローカルの `backend/` で 2 ユーザーの乾杯まで確認） |
+| 友達の招待（リンクを作る → 開いた人と相互フォロー） | ✅ API 接続済み（`/invite/<code>` を開くとログイン後に受け取る） |
+| 写真からアイコンを選ぶ（端末で 320px に縮小） | ✅ API 接続済み（`PUT /me/avatar`。友達のアイコンは ID トークン付きで取得して表示） |
+| 袋の写真の読み取り・今週のふりかえり（Gemini） | ✅ API 接続済み（ローカルは Gemini の「代わり」で確認。本物の Vertex AI は未確認） |
+| ログイン（Firebase Authentication の Google ログイン） | ✅ 実装済み。Firebase のプロジェクトと Google ログインの設定は済み（**本物のログインでの確認はまだ**。ローカルは開発用ログインで確認） |
+| 画面の公開（Firebase Hosting） | ✅ 公開済み（仮のデータで動く版。https://protein-kanpai-t071.web.app ） |
+| サーバーの公開（Cloud Run・Firestore・Cloud Storage・Vertex AI） | ⏳ まだ（手順は `backend/README.md`。公開したら `API_BASE_URL` を付けてビルドし直すと公開版がサーバーにつながる） |
 
 ## しくみ
 
@@ -111,7 +128,7 @@ DevFest GDGoC Japan Hackathon 2026 に向けて、Flutter Web で開発してい
 
 ### 乾杯
 
-フォロー中の友達が**前後 5 秒以内に振ったら乾杯成立**。判定は端末ではなくサーバーの時刻で行います（予定。詳細は [`docs/api-contract.md`](docs/api-contract.md)）。
+フォロー中の友達が**前後 5 秒以内に振ったら乾杯成立**。判定は端末ではなくサーバーの時刻で行います（詳細は [`docs/api-contract.md`](docs/api-contract.md)）。先に振った側の画面にも乾杯を出すため、サーバーは最大 5 秒だけ相手の振りを待ってから応答します。
 
 ## 技術構成と選んだ理由
 
@@ -119,10 +136,10 @@ DevFest GDGoC Japan Hackathon 2026 に向けて、Flutter Web で開発してい
 |---|---|---|
 | **Flutter（Web）** | 画面 | チームに経験者がいる。シェイカーやキャラクターのアニメーションを自由に描ける。Google 技術でそろえられる |
 | **Firebase Hosting** | 公開 | 加速度センサーは HTTPS が必須。静的ファイルを CDN と HTTPS 付きで配信できる |
-| **Firebase Authentication** | Google ログイン（予定） | パスワードを自前で持たずに済む |
-| **Cloud Run** | API（予定） | 乾杯の判定はサーバーの時刻で行う必要がある。使わないときは 0 台まで縮む |
-| **Vertex AI の Gemini** | 袋の写真の読み取り・ふりかえり（予定） | 写真から商品名・味・たんぱく質量を構造化して取り出せる |
-| **Cloud Storage** | アイコン写真（予定） | 友達の画面にも出す画像を安全に配れる |
+| **Firebase Authentication** | Google ログイン（実装済み。プロジェクト作成待ち） | パスワードを自前で持たずに済む。ID トークンを API に付けて本人確認する |
+| **Cloud Run** | API（`backend/` に実装済み。デプロイ待ち） | 乾杯の判定はサーバーの時刻で行う必要がある。使わないときは 0 台まで縮む |
+| **Vertex AI の Gemini** | 袋の写真の読み取り・ふりかえり（実装済み。本番未確認） | 写真から商品名・味・たんぱく質量を構造化して取り出せる |
+| **Cloud Storage** | アイコン写真（実装済み。本番未確認） | 非公開バケットに置き、API がログイン済みの本人と友達にだけ返す |
 
 ![アーキテクチャ図（実線は実装済み、点線は予定）](docs/images/architecture.png)
 
@@ -138,7 +155,27 @@ flutter pub get
 flutter run -d chrome --dart-define=DEV_TOOLS=true
 ```
 
-`DEV_TOOLS=true` を付けると、PC でも確認できるように「（開発用）振ったことにする」ボタンが出ます。**提出・デモ用のビルドには付けないでください**（デモ動画の偽装とみなされないように）。
+`DEV_TOOLS=true` を付けると、PC でも確認できるように「（開発用）振ったことにする」ボタンと、Firebase なしの開発用ログインが出ます。**提出・デモ用のビルドには付けないでください**（デモ動画の偽装とみなされないように）。
+
+API の URL を渡さないので、上のコマンドでは仮のデータ（モック）で動きます。
+
+### バックエンドにつないで動かす（GCP なし）
+
+[uv](https://docs.astral.sh/uv/) が必要です。ターミナルを 2 つ使います。
+
+1 つ目（バックエンド。メモリ保存・開発用ログイン・Gemini の代わり、で動きます。`INVITE_BASE_URL` は招待リンクの先＝画面の URL）:
+
+```bash
+cd backend && uv sync && INVITE_BASE_URL=http://localhost:5555 uv run uvicorn app.main:app --port 8000
+```
+
+2 つ目（画面）:
+
+```bash
+flutter run -d chrome --web-port 5555 --dart-define=DEV_TOOLS=true --dart-define=API_BASE_URL=http://localhost:8000
+```
+
+ログイン画面の「（開発用）Firebase なしでログイン」で uid と名前を入れると、`Authorization: Bearer dev:<uid>:<名前>` でバックエンドに入れます。2 人で乾杯を試すには、別のウィンドウ（シークレットウィンドウでも可）で別の uid でログインし、片方の「友達」→「友達を招待しよう」で作ったリンクをもう片方で開いてから、5 秒以内に両方で振ります。
 
 テストと静的チェック:
 
@@ -168,18 +205,54 @@ open ios/Runner.xcworkspace
 flutter run --release -d "あなたのiPhoneの名前"
 ```
 
+**11/10 に実機（iPhone 13 mini）へ入れて起動できることを確認しました。** そのときに必要だったこと：
+
+| つまずいた所 | 対処 |
+|---|---|
+| `iOS 26.5 is not installed` と出てビルドできない | Xcode 本体とは別に、iPhone 用の部品が要る。`xcodebuild -downloadPlatform iOS`（約 8.5GB）か、Xcode の Settings → Components から入れる |
+| `Signing for "Runner" requires a development team` | Xcode で Runner → Signing & Capabilities → Team に自分の Apple ID のチームを選ぶ |
+| `The app identifier "com.t071.proteinApp" cannot be registered to your development team` | 識別名（Bundle Identifier）は開発チームごとに 1 つしか登録できない。同じ画面で、自分用の別の名前（例：`com.<自分の名前>.proteinKanpai`）に変える。**この変更は個人の設定なのでコミットしない** |
+| 初回のビルドが長い | Google ログイン用の部品（Firebase の iOS SDK、約 700MB）を初回だけ取得する。2 回目からは速い |
+| 起動すると「信頼されていないデベロッパ」 | iPhone の 設定 → 一般 → VPN とデバイス管理 → 自分の Apple ID → 信頼 |
+
+Mac で動かしたサーバー（`backend/`）につなぐときは、Mac の Wi-Fi のアドレスを渡してビルドします。iPhone と Mac を同じ Wi-Fi につなぎ、サーバーは `--host 0.0.0.0` で起動します。
+
+```bash
+flutter build ios --release --dart-define=DEV_TOOLS=true --dart-define=API_BASE_URL=http://<Mac のアドレス>:8000
+```
+
+iPhone アプリは通常 `http://` の相手と通信できませんが、同じ Wi-Fi の中の相手に限って許可しています（`ios/Runner/Info.plist` の `NSAllowsLocalNetworking`）。初回に「ローカルネットワーク上のデバイスの検索と接続」を聞かれたら許可します。この経路での**サーバーとの通信は、まだ確認できていません**（起動までは確認済み）。
+
+## 今日（11/10）までの変更のまとめ
+
+| 変更 | 内容 | 確認 |
+|---|---|---|
+| サーバーを実装（`backend/`） | `docs/api-contract.md` の API を Python + FastAPI で実装。保存は Firestore、画像は Cloud Storage、AI は Vertex AI の Gemini | 自動テスト 93 件、Firestore エミュレータ 15 件 |
+| 画面をサーバーにつなぐ | 仮データ版と API 版を起動時の設定で切り替え。Google ログイン、招待リンク、アイコン画像 | 自動テスト 41 件。ローカルで 2 人の乾杯まで |
+| 画面を公開 | Firebase Hosting に仮データ版を公開（https://protein-kanpai-t071.web.app ） | iPhone の Safari で実際に振って記録できた |
+| 資料を実態に合わせる | 状況を「公開版で確認済み／ローカルで確認済み／本番は未接続」の 3 段階で記載 | — |
+| 動画 | 実機デモ（30 秒）とプレゼン動画（1 分 24 秒）を追加 | 手元の映像と画面収録を並べただけで、センサーの値は書き換えていない |
+| iPhone アプリ | 同じ Wi-Fi 上のサーバーにつなげる設定を追加。実機に入れて起動 | サーバーとの通信は未確認 |
+
+**まだできていないこと**：サーバーの Cloud Run への公開、公開版とサーバーの接続、Gemini・Cloud Storage・本物の Google ログインの本番での確認。
+
 ## 公開（Firebase Hosting）
 
 `main` に push すると、GitHub Actions（`.github/workflows/deploy.yml`）が静的チェック・テスト・ビルドを行い、Firebase の設定がそろっていれば Firebase Hosting に公開します。
 
 **最初に一度だけ設定すること：**
 
-1. [Firebase コンソール](https://console.firebase.google.com)でプロジェクトを作る
+1. [Firebase コンソール](https://console.firebase.google.com)でプロジェクトを作る（バックエンドと同じ GCP プロジェクト）。Authentication → Sign-in method で **Google** を有効にする
 2. プロジェクトの設定 → サービスアカウント → 「新しい秘密鍵を生成」で JSON をダウンロード
-3. GitHub のリポジトリ → Settings → Secrets and variables → Actions
+3. プロジェクトの設定 → マイアプリ → **Web アプリ**を追加し、表示される `apiKey` / `appId` / `projectId` / `messagingSenderId` / `authDomain` を控える（公開ページに埋め込む識別子で、秘密ではありません）
+4. GitHub のリポジトリ → Settings → Secrets and variables → Actions
    - **Secrets**：`FIREBASE_SERVICE_ACCOUNT` に JSON の中身をそのまま
    - **Variables**：`FIREBASE_PROJECT_ID` にプロジェクト ID
+   - **Variables**：`FIREBASE_API_KEY`、`FIREBASE_APP_ID`、`FIREBASE_MESSAGING_SENDER_ID`、`FIREBASE_AUTH_DOMAIN`（手順 3 の値。無いと Google ログインが使えません）
+   - **Variables**：`API_BASE_URL` に `/api`（`firebase.json` の rewrite で Cloud Run に中継。バックエンドは `API_PREFIX=/api` と `PUBLIC_BASE_URL=https://<Hosting の URL>/api`、`INVITE_BASE_URL=https://<Hosting の URL>` で起動する）。空なら仮のデータで公開される
    - （任意）**Variables**：`DEV_TOOLS` に `true` で開発用ボタン付きで公開
+
+`firebase.json` の `/api/**` の rewrite は Cloud Run のサービス名 `protein-kanpai-api`・リージョン `asia-northeast1`（`backend/deploy.sh` の既定）に向けています。変えた場合はここも直してください。
 
 > ⚠️ 秘密鍵の JSON は**絶対にリポジトリに入れない**でください（公開リポジトリです）。
 
@@ -189,13 +262,14 @@ flutter run --release -d "あなたのiPhoneの名前"
 lib/
 ├── main.dart                 アプリの入口
 ├── app/                      テーマ（色・文字）と画面の移動
-├── data/                     データの形・成長段階・データの窓口（AppRepository）
+├── data/                     データの形・成長段階・データの窓口（AppRepository：仮データ版と API 版）・API クライアント・ログイン
 ├── features/                 画面ごとのコード
-│   ├── login/  home/  calendar/  friends/  profile/
+│   ├── login/  home/  calendar/  friends/  profile/  invite/
 ├── shake/                    振る検知（判定の計算は共通、センサーは Web とアプリで別）
 ├── photo/                    写真の選択と縮小（Web とアプリで別）
 └── widgets/                  共通の部品（カード・シェイカー・シェイカーくん）
 ios/                          iPhone アプリ用（Xcode で開く）
+backend/                      バックエンド API（FastAPI / Cloud Run。app/ がコード、tests/ がテスト）
 test/                         自動テスト
 docs/                         API の約束・提出用の下書き・画像・紹介動画
 scripts/                      提出用リポジトリへのコピー、紹介動画の作り方（scripts/video）
@@ -203,9 +277,25 @@ scripts/                      提出用リポジトリへのコピー、紹介�
 
 ## バックエンドとの接続
 
-画面が使うデータは [`lib/data/app_repository.dart`](lib/data/app_repository.dart) にまとめてあります。いまは仮のデータで、バックエンドができたらこのクラスの中身だけを差し替えます。差し替える箇所には `TODO(backend)` と書いてあります。
+画面が使うデータの窓口は [`lib/data/app_repository.dart`](lib/data/app_repository.dart)（`AppRepository`）です。中身は 2 つあり、起動時の `--dart-define=API_BASE_URL` の有無で選びます（`lib/main.dart`）。
+
+| 中身 | ファイル | いつ使うか |
+|---|---|---|
+| `MockAppRepository` | `lib/data/mock_repository.dart` | `API_BASE_URL` 無し。仮のデータでデモする |
+| `ApiAppRepository` | `lib/data/api_repository.dart` | `API_BASE_URL` あり。バックエンド API を呼ぶ |
+
+つなぎ方の要点：
+
+- **ログイン**：`lib/data/auth.dart`。本番は Firebase Authentication の Google ログイン（Web はポップアップ、iPhone アプリは OS のブラウザ画面）。`DEV_TOOLS=true` のときだけ、Firebase なしの開発用ログイン（`dev:<uid>:<名前>`）が使えます。
+- **API 呼び出し**：`lib/data/api_client.dart` が毎回 `Authorization: Bearer <ID トークン>` を付けます。エラーは契約のエラー表の文言で画面に出し、401 ならログイン画面に戻します。
+- **数字はサーバーのものをそのまま使う**：ポイント・連続日数・合計日数・乾杯回数は `GET /me` と `POST /shakes` の値。シェイカーくんの成長と新しいバッジだけは、振る前後の数字から端末側で判定します（`lib/data/progress.dart`）。
+- **友達の様子**：ログイン中は数秒ごとに `GET /friends` を読み直し、「〇〇さんが振っています」を出します。
+- **招待**：「友達を招待しよう」で `POST /invites` のリンクを作り、開いた人は `/invite/<code>` → ログイン → `POST /invites/<code>/accept` でお互いにフォローした状態になります（`lib/features/invite/`）。
+- **アイコン画像**：`avatarUrl`（`GET /avatars/{userId}`）はログイン必須なので、`Image.network` ではなく ID トークン付きで取得してから表示します。
 
 API の形（エンドポイント・返す JSON・エラー・安全性の確認項目）は [`docs/api-contract.md`](docs/api-contract.md) にまとめています。
+
+バックエンド本体は [`backend/`](backend/)（Python 3.13 + FastAPI、Cloud Run）にあります。ローカルでの動かし方・テスト・Cloud Run へのデプロイ手順は [`backend/README.md`](backend/README.md)。
 
 ## ハッカソンへの提出
 
@@ -226,7 +316,7 @@ git clone https://github.com/Devfest-Hackathon-2026/df-2026-t071.git ../df-2026-
 scripts/export-to-submission.sh ../df-2026-t071
 ```
 
-内容を確認してから、`../df-2026-t071` で `git push` します。締切：**2026-11-10（火）17:00**。
+内容を確認してから、`../df-2026-t071` で `git push` します。締切：**2026-11-10（火）19:00**（運営の「提出物・提出ルール」による。以降 11/14 まで再デプロイ・修正は禁止）。
 
 ## 開発のルール
 
@@ -242,7 +332,7 @@ scripts/export-to-submission.sh ../df-2026-t071
 | Noto Sans JP（`assets/fonts/NotoSansJP-*.ttf`） | SIL Open Font License 1.1（[`OFL-NotoSansJP.txt`](assets/fonts/OFL-NotoSansJP.txt)） |
 | Zen Maru Gothic（`assets/fonts/ZenMaruGothic-Black.ttf`） | SIL Open Font License 1.1（[`OFL-ZenMaruGothic.txt`](assets/fonts/OFL-ZenMaruGothic.txt)） |
 | Material Icons（Flutter 同梱） | Apache License 2.0 |
-| Flutter・go_router・package:web・sensors_plus・image_picker | BSD 3-Clause |
+| Flutter・go_router・package:web・sensors_plus・image_picker・http・firebase_core・firebase_auth | BSD 3-Clause |
 | cupertino_icons | MIT |
 | シェイカー・シェイカーくんのイラスト | チームがコードで描画（`lib/widgets/`） |
 | 紹介動画のナレーション | [Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M)（音声 `jf_alpha`）で生成。Apache License 2.0 |

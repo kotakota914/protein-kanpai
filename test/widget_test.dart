@@ -6,15 +6,17 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:protein_app/app/theme.dart';
 import 'package:protein_app/data/app_repository.dart';
 import 'package:protein_app/data/growth.dart';
+import 'package:protein_app/data/mock_repository.dart';
 import 'package:protein_app/main.dart';
 
 /// 2026-11-07（土）を「今日」として固定する
 DateTime fixedNow() => DateTime(2026, 11, 7, 12);
 
-AppRepository newRepo() => AppRepository(clock: fixedNow, random: Random(1));
+MockAppRepository newRepo() =>
+    MockAppRepository(clock: fixedNow, random: Random(1));
 
 void main() {
-  group('AppRepository', () {
+  group('MockAppRepository', () {
     test('仮データでは昨日までの 3 日連続になっている', () {
       final repo = newRepo();
       expect(repo.shookToday, isFalse);
@@ -48,7 +50,7 @@ void main() {
       expect(repo.avatar, isNull);
       await repo.setAvatar(Uint8List.fromList([1, 2, 3]));
       expect(repo.avatar, isNotNull);
-      repo.clearAvatar();
+      await repo.clearAvatar();
       expect(repo.avatar, isNull);
     });
 
@@ -65,11 +67,11 @@ void main() {
       expect(newRepo().daysThisWeek, 4);
     });
 
-    test('フォローを切り替えられる', () {
+    test('フォローを切り替えられる', () async {
       final repo = newRepo();
       final kenta = repo.friends.firstWhere((f) => f.name == 'けんた');
       expect(kenta.following, isFalse);
-      repo.toggleFollow(kenta.id);
+      await repo.toggleFollow(kenta.id);
       expect(
         repo.friends.firstWhere((f) => f.id == kenta.id).following,
         isTrue,
@@ -90,7 +92,7 @@ void main() {
 
     test('14日目に振るとマッチョに成長する（同じ日に何回振っても1日分）', () async {
       var now = fixedNow();
-      final repo = AppRepository(clock: () => now, random: Random(1));
+      final repo = MockAppRepository(clock: () => now, random: Random(1));
       expect(repo.stage.name, '細マッチョ'); // 仮データは 7 日分
       final levelUps = <String>[];
       for (var day = 0; day < 7; day++) {
@@ -111,13 +113,20 @@ void main() {
       expect(AppColors.flavor('抹茶味'), isNot(AppColors.flavor('バニラ味')));
     });
 
-    test('袋の写真を読むと好きなプロテインが入り、色が変わる', () async {
+    test('袋の写真を読んで登録すると好きなプロテインが入り、色が変わる', () async {
       final repo = newRepo();
-      await repo.scanProtein();
+      final photo = Uint8List(0);
+      await repo.saveFavoriteProtein(await repo.scanProtein(photo));
       final first = repo.liquidColor;
-      await repo.scanProtein();
+      await repo.saveFavoriteProtein(await repo.scanProtein(photo));
       expect(repo.favoriteProtein, isNotNull);
       expect(repo.liquidColor, isNot(first));
+    });
+
+    test('読み取っただけでは好きなプロテインは変わらない（確認してから保存する）', () async {
+      final repo = newRepo();
+      await repo.scanProtein(Uint8List(0));
+      expect(repo.favoriteProtein, isNull);
     });
   });
 
@@ -133,7 +142,7 @@ void main() {
 
     test('7日連続になった日に「1週間つづいた」を取る', () async {
       var now = fixedNow();
-      final repo = AppRepository(clock: () => now, random: Random(1));
+      final repo = MockAppRepository(clock: () => now, random: Random(1));
       // 仮データは昨日まで 3 日連続。今日から 4 日振ると 7 日連続になる
       final got = <String>[];
       for (var day = 0; day < 4; day++) {
@@ -147,14 +156,14 @@ void main() {
 
     test('好きなプロテインとアイコンを登録するとバッジが増える', () async {
       final repo = newRepo();
-      await repo.scanProtein();
+      await repo.saveFavoriteProtein(await repo.scanProtein(Uint8List(0)));
       await repo.setAvatar(Uint8List.fromList([1, 2, 3]));
       expect(repo.earnedAchievementIds, containsAll(['favorite', 'avatar']));
     });
   });
 
   group('画面', () {
-    Future<AppRepository> pumpSignedIn(WidgetTester tester) async {
+    Future<MockAppRepository> pumpSignedIn(WidgetTester tester) async {
       tester.view.physicalSize = const Size(390 * 3, 844 * 3);
       tester.view.devicePixelRatio = 3;
       addTearDown(tester.view.reset);

@@ -1,0 +1,29 @@
+name: Backend
+
+# backend/ を変えたときだけ、静的チェックとテストを行う。Flutter 用の deploy.yml とは別に動く。
+# Firestore エミュレータの試験（Java と firebase CLI が要る）はローカルで実行する（backend/README.md）。
+on:
+  push:
+    branches: [main]
+    paths: ["backend/**", ".github/workflows/backend.yml"]
+  pull_request:
+    paths: ["backend/**", ".github/workflows/backend.yml"]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv sync --frozen
+      - run: uv run ruff check app tests
+      - run: uv run ruff format --check app tests
+      - run: uv run pytest -q

@@ -12,6 +12,13 @@
 	<string>プロフィールのアイコンと、好きなプロテインの袋の写真を選ぶために使います。</string>
 	<key>NSMotionUsageDescription</key>
 	<string>シェイカーを振ったことを検知するために、加速度センサーを使います。</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>開発中に、同じ Wi-Fi にあるパソコンのサーバーとつなぐために使います。</string>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>

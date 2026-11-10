@@ -42,3 +42,23 @@ Future<Uint8List> shrinkPhoto(Uint8List bytes, {int maxSide = 320}) async {
 
 /// 写真が大きすぎるときに投げる
 class PhotoTooLargeException implements Exception {}
+
+/// 先頭のバイト列で JPEG / PNG を見分ける（`image/jpeg` か `image/png`。それ以外は null）。
+///
+/// サーバーも同じ方法で確認する（backend/app/services/images.py）。
+/// ファイル名や Content-Type は信用しない。
+String? detectImageType(Uint8List bytes) {
+  const pngSignature = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
+  const jpegSignature = [0xFF, 0xD8, 0xFF];
+  bool startsWith(List<int> signature) {
+    if (bytes.length < signature.length) return false;
+    for (var i = 0; i < signature.length; i++) {
+      if (bytes[i] != signature[i]) return false;
+    }
+    return true;
+  }
+
+  if (startsWith(pngSignature)) return 'image/png';
+  if (startsWith(jpegSignature)) return 'image/jpeg';
+  return null;
+}

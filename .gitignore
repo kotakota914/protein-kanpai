@@ -50,3 +50,13 @@ app.*.map.json
 # Firebase
 .firebase/
 firebase-debug.log
+# iPhone アプリ用の Firebase 設定（プロジェクトごとに置く。公開リポジトリに入れない）
+ios/Runner/GoogleService-Info.plist
+
+# Backend (Python)
+backend/.venv/
+backend/.pytest_cache/
+backend/.ruff_cache/
+backend/**/__pycache__/
+backend/firestore-debug.log
+backend/.env
