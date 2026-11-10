@@ -25,10 +25,10 @@
 
 ## 1. 動くものを公開する（バックエンド担当と一緒に）
 
-- [ ] Firebase Hosting に公開する（README の「公開（Firebase Hosting）」の手順）。担当：＿＿
+- [x] Firebase Hosting に公開する → **https://protein-kanpai-t071.web.app** （11/10 17:49、仮のデータで動く版。手元から `firebase deploy` で公開。GitHub からの自動公開は未設定）
   - GitHub の Settings → Secrets and variables → Actions で、変数 `FIREBASE_PROJECT_ID` と、シークレット `FIREBASE_SERVICE_ACCOUNT` を登録すると、`main` に push するたびに自動で公開される
   - 変数 `DEV_TOOLS` は**登録しない**（開発用ボタンが出てしまう）
-- [ ] 公開された URL を iPhone の Safari で開き、「タップして準備」→ 振って記録できることを確かめる
+- [x] 公開された URL を iPhone の Safari で開き、「タップして準備」→ 振って記録できることを確かめる（11/10 確認）
 - [ ] バックエンドとつながった機能があれば、`docs/product.md` の「機能と実装状況」を「予定」から「実装済み」に書き換える
 - [ ] Cloud Credit の残額と期限を確認する。**Regional Day（11/14）まで公開 URL を動かし続ける**
 - [ ] 予算アラートを設定する（通知されるだけで、自動では止まらない）

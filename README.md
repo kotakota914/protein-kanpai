@@ -7,6 +7,10 @@
 運動を一人で続けられない人のための、スマホのブラウザで使える Web アプリです。
 DevFest GDGoC Japan Hackathon 2026 に向けて、Flutter Web で開発しています。
 
+**▶ 公開版：https://protein-kanpai-t071.web.app** （スマホのブラウザで開いてください。iPhone は Safari）
+
+公開版は**仮のデータ**で動きます。シェイカーを振る検知は本物で、iPhone の実機で振って記録できることを確認しています。記録・乾杯の相手・友達は見本で、ページを読み込み直すと最初の状態に戻ります。サーバー（[`backend/`](backend/)）は実装とローカルでの接続確認まで済んでいて、公開版にはまだつないでいません（[実装の状況](#実装の状況)）。
+
 ### 紹介動画（約 2 分・音声あり）
 
 [![紹介動画：使い方・工夫した点・機能（クリックで再生）](docs/images/video-thumb.png)](docs/video/intro.mp4)
@@ -84,14 +88,15 @@ DevFest GDGoC Japan Hackathon 2026 に向けて、Flutter Web で開発してい
 | 機能 | 状況 |
 |---|---|
 | 画面（8 画面）・画面の移動 | ✅ 実装済み |
-| 振る検知（加速度センサー、iPhone の許可対応） | ✅ 実装済み（実機での調整が必要） |
+| 振る検知（加速度センサー、iPhone の許可対応） | ✅ 実装済み（公開版を iPhone の Safari で開き、実際に振って記録できることを確認） |
 | シェイカーくんの成長・味ごとの色・バッジ | ✅ 実装済み（成長とバッジは振る前後の数字から端末側で判定） |
 | 記録・乾杯の判定・カレンダー・フォロー・タイムライン | ✅ API 接続済み（ローカルの `backend/` で 2 ユーザーの乾杯まで確認） |
 | 友達の招待（リンクを作る → 開いた人と相互フォロー） | ✅ API 接続済み（`/invite/<code>` を開くとログイン後に受け取る） |
 | 写真からアイコンを選ぶ（端末で 320px に縮小） | ✅ API 接続済み（`PUT /me/avatar`。友達のアイコンは ID トークン付きで取得して表示） |
 | 袋の写真の読み取り・今週のふりかえり（Gemini） | ✅ API 接続済み（ローカルは Gemini の「代わり」で確認。本物の Vertex AI は未確認） |
-| ログイン（Firebase Authentication の Google ログイン） | ✅ 実装済み（**本物の Firebase プロジェクトでの確認はまだ**。ローカルは開発用ログインで確認） |
-| Cloud Run へのデプロイ・Firebase プロジェクトの作成 | ⏳ GCP のクレジットが届いてから（手順は `backend/README.md`） |
+| ログイン（Firebase Authentication の Google ログイン） | ✅ 実装済み。Firebase のプロジェクトと Google ログインの設定は済み（**本物のログインでの確認はまだ**。ローカルは開発用ログインで確認） |
+| 画面の公開（Firebase Hosting） | ✅ 公開済み（仮のデータで動く版。https://protein-kanpai-t071.web.app ） |
+| サーバーの公開（Cloud Run・Firestore・Cloud Storage・Vertex AI） | ⏳ まだ（手順は `backend/README.md`。公開したら `API_BASE_URL` を付けてビルドし直すと公開版がサーバーにつながる） |
 
 ## しくみ
 
