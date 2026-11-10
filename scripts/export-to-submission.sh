@@ -57,6 +57,7 @@ block = f"""{start}
   - 仮のデータで動く版。振る検知は本物で、iPhone の実機で確認済み。サーバーは実装とローカルでの接続確認まで済み、公開版にはまだつないでいない
 - **アプリのソースと詳しい説明**：[app/README.md](app/README.md)
 - **サーバー（FastAPI / Cloud Run 用）**：[app/backend/](app/backend/)、API の約束は [app/docs/api-contract.md](app/docs/api-contract.md)
+- **プレゼン動画（1 分 24 秒。課題・実機デモ・しくみ・現状）**：[app/docs/video/presentation.mp4](app/docs/video/presentation.mp4)
 - **実機デモ動画（30 秒。iPhone で実際に振っている手元と画面）**：[app/docs/video/demo.mp4](app/docs/video/demo.mp4)
 - **紹介動画**：[app/docs/video/intro.mp4](app/docs/video/intro.mp4)
 - **プロダクト説明**：[app/docs/product.md](app/docs/product.md)
